@@ -49,34 +49,52 @@ proof (intro Dep_Fun_Rel_relI)
  qed
 qed
 
-definition "bi_total_on A R = (rel_surjective_at A R \<and> left_total_on A R)"
+definition "bi_total_on A B R = (rel_surjective_at B R \<and> left_total_on A R)"
                                                                
 lemma bi_total_onI [intro]:
-  assumes "\<And>y. P y \<Longrightarrow> in_codom R y"
+  assumes "\<And>y. Q y \<Longrightarrow> in_codom R y"
   and  "\<And>x. P x \<Longrightarrow> in_dom R x"
-  shows "bi_total_on P R"
+  shows "bi_total_on P Q R"
   unfolding bi_total_on_def using assms by auto
 
 lemma bi_total_onE1:
-  assumes "bi_total_on P R"
-  and "P y"
+  assumes "bi_total_on P Q R"
+  and "Q y"
 obtains "x" where "R x y"
   unfolding bi_total_on_def using rel_surjective_atE assms
   by (metis bi_total_on_def)
 
 lemma bi_total_onE2:
-  assumes "bi_total_on P R"
+  assumes "bi_total_on P Q R"
   and "P x"
 obtains "y" where "R x y"
   unfolding bi_total_on_def using left_total_onE assms
   by (metis bi_total_on_def)
 
-theorem bi_total_imp_rel_all: assumes bit: "bi_total_on (\<top>::'a \<Rightarrow> bool) (T::'a \<Rightarrow> 'b \<Rightarrow> bool)" 
+theorem bi_total_imp_rel_all: assumes bit: "bi_total_on (\<top>::'a \<Rightarrow> bool) (\<top>::'b \<Rightarrow> bool) (T::'a \<Rightarrow> 'b \<Rightarrow> bool)" 
   shows "((T \<Rrightarrow> (=)) \<Rrightarrow> (=)) All All"
 proof (intro Dep_Fun_Rel_relI)
   fix a b
   assume reled: "(T \<Rrightarrow> (=)) (a::'a \<Rightarrow> bool) (b::'b \<Rightarrow> bool)"
-  then show "(All a) = (All b)" sorry
+  then show "(All a) = (All b)" proof (cases "All a")
+    case True
+    then have "All b" proof
+      fix y
+      obtain "x" where "T x y" using bi_total_onE1[of \<top> \<top> T y] bit by blast
+      from this True have "a x" by blast
+      then have "b y" using \<open>T x y\<close> reled by blast
+    then show "All b"
+      by (metis (full_types, lifting) Dep_Fun_Rel_relD True bi_total_onE1 bit reled top_conj(2))
   qed
-qed
+  thus ?thesis using True by argo
+  next
+    case False
+    then obtain "x" where "\<not> a x" by blast
+    then obtain "y" where "T x y" using bi_total_onE2[of \<top> \<top> T x] bit by blast
+    from \<open>~ a x\<close> this reled have "\<not> b y" by blast
+    then have "\<not> All b" by blast
+    then show ?thesis using False by blast
+  qed
+  qed
+
 end
