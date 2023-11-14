@@ -37,20 +37,11 @@ theorem bi_unique_imp_rel_eq_on_pred:
 proof (intro Dep_Fun_Rel_relI)
   fix a a' b b'
   assume "T a a'" and "T b b'"
-  with assms show "(eq_onp P a b) \<longleftrightarrow> (eq_onp Q a' b')" proof (auto, goal_cases)
-    case 1              
-    then have "P a \<Longrightarrow> Q a'" using assms by blast
-    from 1 have "T a b'" using \<open>T b b'\<close> eq_onp_to_eq by fastforce
-    then have "a' = b'" using assms \<open>T a a'\<close> \<open>eq_onp P a b\<close> eq_onp_def
-      by (metis bi_unique_onD1)
-    then show ?case
-      by (metis "1"(5) \<open>P a \<Longrightarrow> Q a'\<close> eq_onp_def)
-  next
-    case 2
-    then show ?case
-      by (smt (z3) Dep_Fun_Rel_rel_def bi_unique_onD2 eq_onp_def)
+  with assms show "(eq_onp P a b) \<longleftrightarrow> (eq_onp Q a' b')" apply (auto simp:  Dep_Fun_Rel_rel_def eq_onp_def dest!: bi_unique_onD1 bi_unique_onD2) 
+    apply (meson assms(1) bi_unique_onD1)
+    by (meson assms(1) bi_unique_onD2)
   qed
-qed
+
 
 theorem bi_unique_imp_rel_eq:
   assumes "rel_bi_unique (T::'a \<Rightarrow> 'b \<Rightarrow> bool)" 
