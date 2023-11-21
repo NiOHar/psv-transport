@@ -7,6 +7,7 @@ theory Transport_Proof
     "Transport.Binary_Relation_Properties"
     "ML_Unification.ML_Unification_HOL_Setup"
     "ML_Unification.Unify_Resolve_Tactics"
+
 begin
 
 paragraph \<open>Unification Hints\<close>
@@ -108,7 +109,15 @@ lemma Fun_Rel_rev_imp_eq_restrict_if_bi_unique_on:
   assumes "bi_unique_on (P :: 'a \<Rightarrow> bool) (R ::'a \<Rightarrow> _)"
   and "(R \<Rrightarrow> (\<longleftarrow>)) P Q"
   shows "(R \<Rrightarrow> R \<Rrightarrow> (\<longleftarrow>)) (=\<^bsub>P\<^esub>) (=\<^bsub>Q\<^esub>)"
-  sorry
+proof (intro Dep_Fun_Rel_relI rev_impI)
+  fix a a' b b'
+  assume "R a a'" "R b b'" "a' =\<^bsub>Q\<^esub> b'"
+  then have "R b a'" using assms by blast
+  then have "P b" using assms \<open>a' =\<^bsub>Q\<^esub> b'\<close> by blast
+  have "P a" using assms \<open>a' =\<^bsub>Q\<^esub> b'\<close> \<open>R a a'\<close> by blast
+  then have "a = b" using assms \<open>R a a'\<close> \<open>R b a'\<close> bi_unique_onE rel_injective_onD \<open>P b\<close> by fastforce
+  then show "a =\<^bsub>P\<^esub> b" using \<open>P a\<close> by blast
+qed
 
 corollary Fun_Rel_iff_eq_restrict_if_bi_unique_on:
   assumes bi_unique: "bi_unique_on (P :: 'a \<Rightarrow> bool) (R ::'a \<Rightarrow> _)"
@@ -154,7 +163,7 @@ lemma bi_total_onE [elim]:
 definition "bi_total \<equiv> bi_total_on (\<top> :: 'a \<Rightarrow> bool) (\<top> :: 'b \<Rightarrow> bool) :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool"
 
 lemma bi_total_eq_bi_total_on:
-  "bi_total = (bi_total_on (\<top> :: 'a \<Rightarrow> bool) (\<top> :: 'b \<Rightarrow> bool) :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
+  "(bi_total :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool) = (bi_total_on (\<top> :: 'a \<Rightarrow> bool) (\<top> :: 'b \<Rightarrow> bool) :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
   unfolding bi_total_def ..
 
 lemma bi_total_on_eq_bi_total_if_eq_top [uhint]:
@@ -163,14 +172,14 @@ lemma bi_total_on_eq_bi_total_if_eq_top [uhint]:
   unfolding bi_total_eq_bi_total_on using assms by simp
 
 lemma bi_totalI [intro]:
-  assumes "left_total R"
+  assumes "Binary_Relations_Left_Total.left_total R"
   and "rel_surjective R"
   shows "bi_total R"
   using assms by (urule bi_total_onI)
 
 lemma bi_totalE [elim]:
   assumes "bi_total R"
-  obtains "left_total R" "rel_surjective R"
+  obtains "Binary_Relations_Left_Total.left_total R" "rel_surjective R"
   using assms by (urule (e) bi_total_onE)
 
 theorem Fun_Rel_iff_all_restrict_if_bi_total_on:
@@ -184,33 +193,99 @@ proof (intro Dep_Fun_Rel_relI)
 qed
 
 
+
 theorem Fun_Rel_iff_all_if_bi_total: assumes "bi_total (R :: 'a \<Rightarrow> 'b \<Rightarrow> bool)"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) All All"
-proof (intro Dep_Fun_Rel_relI)
-  fix p q
-  assume reled: "(R \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
-  with assms show "(All p) \<longleftrightarrow> (All q)" sorry
+proof -
+  have 1: "(R \<Rrightarrow> (\<longleftrightarrow>)) (\<top>::'a \<Rightarrow> bool) (\<top>::'b \<Rightarrow> bool)" by auto
+  from assms have 2: "bi_total_on (\<top> ::'a \<Rightarrow> bool) (\<top> :: 'b \<Rightarrow> bool) R" using bi_total_eq_bi_total_on[symmetric] sorry
+  (* Why does this not work? It does unfolding the def *)
+  from 1 2 show ?thesis using Fun_Rel_iff_all_restrict_if_bi_total_on[of \<top> \<top> R]  by auto
 qed
 
 theorem bi_total_if_Fun_Rel_iff_all:
   assumes "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) All All"
   shows "bi_total (R :: 'a \<Rightarrow> 'b \<Rightarrow> bool)"
-using assms proof (intro bi_total_onI, goal_cases)
-  case (1 y)
-  then show ?case using assms Dep_Fun_Rel_rel_def in_codom_def sorry
+  using assms proof (intro bi_totalI, goal_cases)
+  case 1
+  then show ?case sorry
 next
-  case (2 x)
+  case 2
   then show ?case sorry
 qed
 
-(*
-theorem left_total_imp_Ex: assumes "(\<exists> x . (p x \<and> (\<exists> y . T x y))) \<and> (\<exists> y . (q y \<and> (\<exists> x . T x y)))"
-  shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex Ex"
-proof (intro Dep_Fun_Rel_relI)
+
+lemma left_total_imp_Ex_imp: assumes "left_total T"
+  shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) Ex Ex"
+  proof (intro Dep_Fun_Rel_relI)
   fix p q
-  assume "(T \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
-  with assms show "(\<exists> x . p x) \<longleftrightarrow> (\<exists> x . q x)" apply (auto simp add: left_total_eq_left_total_on)
+  assume as: "(T \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
+  show "(\<exists> x . p x) \<longrightarrow> (\<exists> x . q x)" proof
+    assume "\<exists> x . p x"
+    then obtain x where "p x" by blast
+    then obtain y where "T x y" using assms by (auto elim: left_totalE)
+    then have "q y" using as \<open>p x\<close> by blast
+    then show "\<exists> y . q y" by blast
   qed
-*)
+qed
+
+lemma surjective_imp_Ex_revimp: assumes "rel_surjective T"
+  shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftarrow>)) Ex Ex"
+  proof (intro Dep_Fun_Rel_relI)
+  fix p q
+  assume as: "(T \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
+  show "(\<exists> x . p x) \<longleftarrow> (\<exists> x . q x)" proof
+    assume "\<exists> y . q y"
+    then obtain y where "q y" by blast
+    then obtain x where "T x y" using assms by (auto elim: rel_surjectiveE)
+    then have "p x" using as \<open>q y\<close> by blast
+    then show "\<exists> x . p x" by blast
+  qed
+qed
+
+
+corollary bi_total_imp_Ex_iff: assumes "bi_total T"
+  shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex Ex"
+using bi_totalE left_total_imp_Ex_imp surjective_imp_Ex_revimp sorry
+
+
+lemma left_total_imp_Ex1_imp: assumes "left_total T" "right_unique T"
+  shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (-->)) Ex1 Ex1"
+  proof (intro Dep_Fun_Rel_relI)
+  fix p q
+  assume as: "(T \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
+  show "Ex1 p \<longrightarrow> Ex1 q" proof
+    assume "Ex1 p" 
+    then obtain x where "p x" "(\<forall>x'. p x' \<longrightarrow> x' = x)" by blast
+    from \<open>p x\<close> obtain y where "T x y" using assms by (auto elim: left_totalE)
+    then have "q y" using as \<open>p x\<close> by blast
+    then have "\<exists> y . q y" by blast
+    from \<open>(\<forall>x'. p x' \<longrightarrow> x' = x)\<close> \<open>right_unique T\<close> as have "(\<forall>y'. q y' \<longrightarrow> y' = y)" sorry
+    from this \<open>\<exists> y . q y\<close> show "\<exists>! y . q y" by blast
+  qed
+qed
+
+lemma surjective_imp_Ex1_revimp: assumes "rel_surjective T" "rel_injective T"
+  shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftarrow>)) Ex1 Ex1"
+  proof (intro Dep_Fun_Rel_relI)
+  fix p q
+  assume as: "(T \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
+  show "(\<exists>! x . p x) \<longleftarrow> (\<exists>! x . q x)" proof
+    assume "\<exists>! y . q y"
+    then obtain y where "q y" "(\<forall>y'. q y' \<longrightarrow> y' = y)" by blast
+    from \<open>q y\<close> obtain x where "T x y" using assms by (auto elim: rel_surjectiveE)
+    then have "p x" using as \<open>q y\<close> by blast
+    then have "\<exists> x . p x" by blast
+    from \<open>(\<forall>y'. q y' \<longrightarrow> y' = y)\<close> \<open>rel_injective T\<close> as have "(\<forall>x'. p x' \<longrightarrow> x' = x)" sorry
+    from this \<open>\<exists> x . p x\<close> show "\<exists>! x . p x" by blast
+  qed
+qed
+
+
+corollary bi_total_imp_Ex1_iff: assumes "bi_total T"
+  shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex1 Ex1"
+using bi_totalE left_total_imp_Ex_imp surjective_imp_Ex_revimp sorry
+
+
 
 end
