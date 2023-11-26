@@ -380,7 +380,7 @@ lemma ex_on1_eq_ex1_if_eq_top [uhint]:
   shows "ex1_on P \<equiv> Ex1"
   using assms by simp
 
-lemma left_total_imp_Ex1_on_imp: assumes "bi_total_on P Q T" "right_unique_at Q T"
+lemma left_total_imp_Ex1_on_imp: assumes "bi_total_on P Q T" "right_unique_on P T"
   and "(T \<Rrightarrow> (\<longleftrightarrow>)) P Q"
   shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) (ex1_on P) (ex1_on Q)"
   proof (intro Dep_Fun_Rel_relI)
@@ -398,7 +398,7 @@ lemma left_total_imp_Ex1_on_imp: assumes "bi_total_on P Q T" "right_unique_at Q 
       then obtain x' where "T x' y'" using assms by blast
       from this \<open>q y' \<and> Q y'\<close> as assms(3) have "p x' \<and> P x'" by blast
       from this \<open>\<forall> x' . (P x' \<and> p x') \<longrightarrow> x' = x\<close> \<open>P x\<close> \<open>p x\<close> have "x' = x" by blast
-      from this \<open>right_unique_at Q T\<close> \<open>T x' y'\<close> \<open>T x y\<close> \<open>Q y'\<close> \<open>Q y \<and> q y\<close> have "y = y'" by (auto dest: right_unique_atD)
+      from this \<open>right_unique_on P T\<close> \<open>P x\<close> \<open>T x' y'\<close> \<open>T x y\<close> \<open>Q y'\<close> \<open>Q y \<and> q y\<close> have "y = y'" by (auto dest: right_unique_onD)
       then show "y' = y" by blast
     qed
     with \<open>Q y \<and> q y\<close> show "ex1_on Q q"  by blast
@@ -429,6 +429,12 @@ lemma surjective_imp_Ex1_on_revimp: assumes "bi_total_on P Q T" "rel_injective_o
   qed
 qed
 
+
+corollary bi_total_imp_Ex1_on_iff: assumes "bi_total_on P Q T" "bi_unique_on P T"
+  and "(T \<Rrightarrow> (\<longleftrightarrow>)) P Q"
+  shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) (ex1_on P) (ex1_on Q)"                
+  using assms apply (intro Dep_Fun_Rel_relI) apply (elim bi_total_onE bi_unique_onE) apply (intro iffI)
+  using left_total_imp_Ex1_on_imp[of P Q T] surjective_imp_Ex1_on_revimp[of P Q T] by auto
 
 lemma left_total_imp_Ex1_imp: assumes "bi_total T" "right_unique T"
   shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) Ex1 Ex1"
@@ -481,7 +487,8 @@ qed
 
 corollary bi_total_imp_Ex1_iff: assumes "bi_total T" "bi_unique T"
   shows "((T \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex1 Ex1"                
-    using assms left_total_imp_Ex1_imp surjective_imp_Ex1_revimp sorry
+  using assms apply (intro Dep_Fun_Rel_relI) apply (elim bi_totalE bi_uniqueE) apply (intro iffI)
+  using left_total_imp_Ex1_imp[of T] surjective_imp_Ex1_revimp[of T] sorry
 
            
 
