@@ -358,37 +358,23 @@ proof (intro Dep_Fun_Rel_relI iffI)
   with as show "ex_on Q q \<Longrightarrow> ex_on P p" using surjective_imp_Ex_on_revimp assms by blast
 qed
 
+lemma Ex_on_imp_imp_left_total_on:
+  assumes "((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) (ex_on P) (ex_on Q)"  
+  and "(R \<Rrightarrow> (\<longrightarrow>)) P Q"
+  shows "left_total_on P R"
+  sorry
+   
 end
 
 lemma left_total_imp_Ex_imp:
   assumes "left_total R"
-  shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) Ex Ex"
-proof (intro Dep_Fun_Rel_relI)
-  fix p q
-  assume as: "(R \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
-  show "(\<exists>x. p x) \<longrightarrow> (\<exists>x. q x)" proof
-    assume "\<exists>x. p x"
-    then obtain x where "p x" by blast
-    then obtain y where "R x y" using assms by (auto elim: left_totalE)
-    then have "q y" using as \<open>p x\<close> by blast
-    then show "\<exists> y . q y" by blast
-  qed
-qed
+  shows "((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) Ex Ex"
+  using assms by (urule left_total_imp_Ex_on_imp) auto
 
 lemma surjective_imp_Ex_revimp:
   assumes "rel_surjective R"
-  shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftarrow>)) Ex Ex"
-  proof (intro Dep_Fun_Rel_relI)
-  fix p q
-  assume as: "(R \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
-  show "(\<exists>x. p x) \<longleftarrow> (\<exists>x. q x)" proof
-    assume "\<exists> y . q y"
-    then obtain y where "q y" by blast
-    then obtain x where "R x y" using assms by (auto elim: rel_surjectiveE)
-    then have "p x" using as \<open>q y\<close> by blast
-    then show "\<exists>x. p x" by blast
-  qed
-qed
+  shows "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) Ex Ex"
+  using assms by (urule surjective_imp_Ex_on_revimp) auto
 
 corollary bi_total_imp_Ex_iff:
   assumes "bi_total R"
@@ -469,61 +455,22 @@ corollary bi_total_imp_Ex1_on_iff: assumes "bi_total_on P Q R" "bi_unique_on P R
 
 lemma left_total_imp_Ex1_imp: assumes "bi_total R" "right_unique R"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) Ex1 Ex1"
-  proof (intro Dep_Fun_Rel_relI)
-  fix p q
-  assume as: "(R \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
-  show "Ex1 p \<longrightarrow> Ex1 q" proof
-    assume "Ex1 p"
-    then obtain x where "p x" "(\<forall>x'. p x' \<longrightarrow> x' = x)" by blast
-    from \<open>p x\<close> obtain y where "R x y" using assms by (auto elim: left_totalE)
-    then have "q y" using as \<open>p x\<close> by blast
-    then have "\<exists> y . q y" by blast
-    have "(\<forall>y'. q y' \<longrightarrow> y' = y)" proof (intro allI impI)
-      fix y'
-      assume "q y'"
-      from assms obtain x' where "R x' y'" by (auto elim: rel_surjectiveE)
-      from this \<open>q y'\<close> as have "p x'" by blast
-      from this \<open>(\<forall>x'. p x' \<longrightarrow> x' = x)\<close> have "x' = x" by blast
-      from this \<open>right_unique R\<close> \<open>R x' y'\<close> \<open>R x y\<close> have "y = y'" by (auto dest: right_uniqueD)
-      then show "y' = y" by blast
-    qed
-    with \<open>\<exists> y . q y\<close> show "\<exists>! y . q y" by blast
-  qed
-qed
+using assms by (urule left_total_imp_Ex1_on_imp) auto
 
 lemma surjective_imp_Ex1_revimp: assumes "bi_total R" "rel_injective R"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftarrow>)) Ex1 Ex1"
-  proof (intro Dep_Fun_Rel_relI)
-  fix p q
-  assume as: "(R \<Rrightarrow> (\<longleftrightarrow>)) (p::'a \<Rightarrow> bool) (q::'b \<Rightarrow> bool)"
-  show "(\<exists>!x. p x) \<longleftarrow> (\<exists>!x. q x)" proof
-    assume "Ex1 q"
-    then obtain y where "q y" "(\<forall>y'. q y' \<longrightarrow> y' = y)" by blast
-    from \<open>q y\<close> obtain x where "R x y" using assms by (auto elim: rel_surjectiveE)
-    then have "p x" using as \<open>q y\<close> by blast
-    then have "\<exists>x. p x" by blast
-    have "(\<forall>x'. p x' \<longrightarrow> x' = x)" proof (intro allI impI)
-     fix x'
-      assume "p x'"
-      from assms obtain y' where "R x' y'" by (auto elim: left_totalE)
-      from this \<open>p x'\<close> as have "q y'" by blast
-      from this \<open>(\<forall>y'. q y' \<longrightarrow> y' = y)\<close> have "y' = y" by blast
-      from this \<open>rel_injective R\<close> \<open>R x' y'\<close> \<open>R x y\<close> have "x = x'" by (fast dest: rel_injectiveD)
-      then show "x' = x" by blast
-    qed
-    with \<open>\<exists>x. p x\<close> show "\<exists>!x. p x" by blast
-  qed
-qed
+using assms by (urule surjective_imp_Ex1_on_revimp) auto
 
 
 corollary bi_total_imp_Ex1_iff: assumes "bi_total R" "bi_unique R"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex1 Ex1"
-  using assms apply (intro Dep_Fun_Rel_relI) apply (elim bi_totalE bi_uniqueE) apply (intro iffI)
-  using left_total_imp_Ex1_imp[of R] surjective_imp_Ex1_revimp[of R] sorry
+  using assms by (urule bi_total_imp_Ex1_on_iff) auto
 
 
 
 context galois begin
+
+(* in general, I had the feeling that the "forward" direction is simpler... *)
 
 lemma galois_surjective:
   assumes surj: "rel_surjective (\<le>\<^bsub>R\<^esub>)"
@@ -535,6 +482,62 @@ proof (intro rel_surjectiveI)
   with mono have "r y' \<^bsub>L\<^esub>\<lessapprox> y" by blast
   then show "in_codom (\<^bsub>L\<^esub>\<lessapprox>) y" by blast
 qed
+
+lemma galois_surjective_rev:
+  assumes "rel_surjective (\<^bsub>L\<^esub>\<lessapprox>)"
+  shows "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r" and "rel_surjective (\<le>\<^bsub>R\<^esub>)"
+proof
+  show "\<And>u v. u \<le>\<^bsub>R\<^esub> v \<Longrightarrow> r u \<le>\<^bsub>L\<^esub> r v" sorry  (* not sure how to show this *)
+  show "rel_surjective (\<le>\<^bsub>R\<^esub>)" using assms apply (intro rel_surjectiveI) by (auto elim: rel_surjectiveE)
+qed
+
+lemma galois_left_total:
+  assumes leftt: "left_total (\<le>\<^bsub>L\<^esub>)"
+  and mono: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  shows "left_total (\<^bsub>L\<^esub>\<lessapprox>)"
+proof (intro left_totalI)
+  fix x
+  from leftt obtain x' where "x \<le>\<^bsub>L\<^esub> x'" by (elim left_totalE)
+  have "x \<^bsub>L\<^esub>\<lessapprox> l x'" proof (intro left_GaloisI)
+    show "in_codom R (l x')" using mono \<open>x \<le>\<^bsub>L\<^esub> x'\<close> by blast
+    have "x' = r (l x')" sorry (* should this be true? - or is there some other way to show this... *)
+    thus "x \<le>\<^bsub>L\<^esub> r (l x')" using \<open>x \<le>\<^bsub>L\<^esub> x'\<close> by auto
+  qed
+  then show "in_dom (\<^bsub>L\<^esub>\<lessapprox>) x" by blast
+qed
+
+corollary galois_bi_total:
+  assumes leftt: "left_total (\<le>\<^bsub>L\<^esub>)"
+  and mono1: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and surj: "rel_surjective (\<le>\<^bsub>R\<^esub>)"
+  and mono2: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+shows "bi_total (\<^bsub>L\<^esub>\<lessapprox>)"
+  apply (intro bi_totalI) using leftt mono1 apply (rule galois_left_total)
+  using surj mono2 by (rule galois_surjective) 
+
+lemma galois_injective:
+  assumes inje: "rel_injective (\<le>\<^bsub>L\<^esub>)"
+  shows "rel_injective (\<^bsub>L\<^esub>\<lessapprox>)"
+  using assms by (auto dest: rel_injectiveD)
+  (* this was suprisingly easy - assumption to strong? *)
+
+lemma galois_injective_rev:
+  assumes "rel_injective (\<^bsub>L\<^esub>\<lessapprox>)"
+  shows  "rel_injective (\<le>\<^bsub>L\<^esub>)"
+  sorry
+
+lemma galois_right_unique:
+  assumes run: "right_unique (\<le>\<^bsub>L\<^esub>)"
+  shows "right_unique (\<^bsub>L\<^esub>\<lessapprox>)"
+  using assms  apply (intro right_uniqueI, elim left_GaloisE right_uniqueD) sorry
+
+corollary galois_bi_unique:
+  assumes inje: "rel_injective (\<le>\<^bsub>L\<^esub>)"
+  and run: "right_unique (\<le>\<^bsub>L\<^esub>)"
+shows "bi_unique (\<^bsub>L\<^esub>\<lessapprox>)"
+  apply (intro bi_uniqueI) 
+  using run apply (rule galois_right_unique)
+  using inje by (rule galois_injective)
 
 end
 
