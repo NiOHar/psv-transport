@@ -358,12 +358,8 @@ proof (intro Dep_Fun_Rel_relI iffI)
   with as show "ex_on Q q \<Longrightarrow> ex_on P p" using surjective_imp_Ex_on_revimp assms by blast
 qed
 
-lemma Ex_on_imp_imp_left_total_on:
-  assumes "((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) (ex_on P) (ex_on Q)"  
-  and "(R \<Rrightarrow> (\<longrightarrow>)) P Q"
-  shows "left_total_on P R"
-  sorry
-   
+(* reverse does not hold *)
+
 end
 
 lemma left_total_imp_Ex_imp:
@@ -380,7 +376,7 @@ corollary bi_total_imp_Ex_iff:
   assumes "bi_total R"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex Ex"
   using assms by (urule bi_total_imp_Ex_on_iff) auto
-
+(* reverse does not hold *)
 
 definition "ex1_on P p \<equiv> (\<exists>!x. P x \<and> p x)"
 
@@ -452,6 +448,7 @@ corollary bi_total_imp_Ex1_on_iff: assumes "bi_total_on P Q R" "bi_unique_on P R
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) (ex1_on P) (ex1_on Q)"
   using assms apply (intro Dep_Fun_Rel_relI) apply (elim bi_total_onE bi_unique_onE) apply (intro iffI)
   using left_total_imp_Ex1_on_imp[of P Q R] surjective_imp_Ex1_on_revimp[of P Q R] by auto
+(* reverse does not hold *)
 
 lemma left_total_imp_Ex1_imp: assumes "bi_total R" "right_unique R"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) Ex1 Ex1"
@@ -465,7 +462,7 @@ using assms by (urule surjective_imp_Ex1_on_revimp) auto
 corollary bi_total_imp_Ex1_iff: assumes "bi_total R" "bi_unique R"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex1 Ex1"
   using assms by (urule bi_total_imp_Ex1_on_iff) auto
-
+(* reverse does not hold *)
 
 
 context galois begin
