@@ -561,40 +561,70 @@ corollary bi_total_imp_Ex1_iff: assumes "bi_total R" "bi_unique R"
 context galois begin
 
 (*Note Kevin: Try to generalise to relativised concepts next (e.g. rel_surjective_on*)
-lemma surjective_left_GaloisI:
+
+lemma surjective_at_left_GaloisI:
+  assumes surj: "rel_surjective_at (P :: 'b \<Rightarrow> bool) (\<le>\<^bsub>R\<^esub>)"
+  and mono: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+shows "rel_surjective_at P (\<^bsub>L\<^esub>\<lessapprox>)"
+  using assms by (intro rel_surjective_atI) (auto elim!: rel_surjective_atE)
+
+
+corollary surjective_left_GaloisI:
   assumes surj: "rel_surjective (\<le>\<^bsub>R\<^esub>)"
   and mono: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
   shows "rel_surjective (\<^bsub>L\<^esub>\<lessapprox>)"
-proof (intro rel_surjectiveI)
-  fix y
-  from surj obtain y' where "y' \<le>\<^bsub>R\<^esub> y" by (elim rel_surjectiveE)
-  with mono have "r y' \<^bsub>L\<^esub>\<lessapprox> y" by blast
-  then show "in_codom (\<^bsub>L\<^esub>\<lessapprox>) y" by blast
-qed
+  using assms by (urule surjective_at_left_GaloisI)
 
-(*Note Kevin: you cannot show monotonicity of r from surjectivity of the Galois relator (but
-if L, R are a Galois connection, then r is monotone)*)
-lemma rel_surjective_right_if_surjective_left_Galois:
+
+
+lemma rel_surjective_at_right_if_surjective_at_left_Galois:
+  assumes "rel_surjective_at (P :: 'b \<Rightarrow> bool) (\<^bsub>L\<^esub>\<lessapprox>)"
+  shows "rel_surjective_at P (\<le>\<^bsub>R\<^esub>)"
+  using assms by (intro rel_surjective_atI) (auto)
+
+corollary rel_surjective_right_if_surjective_left_Galois:
   assumes "rel_surjective (\<^bsub>L\<^esub>\<lessapprox>)"
   shows "rel_surjective (\<le>\<^bsub>R\<^esub>)"
-  using assms by (intro rel_surjectiveI) (auto elim: rel_surjectiveE)
+  using assms by (urule rel_surjective_at_right_if_surjective_at_left_Galois)
+
+lemma left_total_on_left_GaloisI:
+  assumes leftt: "left_total_on (P :: 'a \<Rightarrow> bool) (\<le>\<^bsub>L\<^esub>)"
+  and mono: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and gal_prop: "((\<le>\<^bsub>L\<^esub>) \<unlhd>\<^sub>h (\<le>\<^bsub>R\<^esub>)) l r"
+shows "left_total_on P (\<^bsub>L\<^esub>\<lessapprox>)"
+proof (intro left_total_onI)
+  fix x
+  assume "P x"
+  with leftt obtain x' where "x \<le>\<^bsub>L\<^esub> x'" by (elim left_total_onE)
+  with mono gal_prop have "x \<^bsub>L\<^esub>\<lessapprox> l x'" by (intro left_Galois_left_if_left_relI)
+  then show "in_dom (\<^bsub>L\<^esub>\<lessapprox>) x" by blast
+qed
 
 lemma left_total_left_GaloisI:
   assumes leftt: "left_total (\<le>\<^bsub>L\<^esub>)"
   and mono: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
   and gal_prop: "((\<le>\<^bsub>L\<^esub>) \<unlhd>\<^sub>h (\<le>\<^bsub>R\<^esub>)) l r"
-  shows "left_total (\<^bsub>L\<^esub>\<lessapprox>)"
-proof (intro left_totalI)
-  fix x
-  from leftt obtain x' where "x \<le>\<^bsub>L\<^esub> x'" by (elim left_totalE)
-  with mono gal_prop have "x \<^bsub>L\<^esub>\<lessapprox> l x'" by (intro left_Galois_left_if_left_relI)
-  then show "in_dom (\<^bsub>L\<^esub>\<lessapprox>) x" by blast
-qed
+shows "left_total (\<^bsub>L\<^esub>\<lessapprox>)"
+  using assms by (urule left_total_on_left_GaloisI)
+
+lemma left_total_on_left_if_left_total_left_GaloisI:
+  assumes "left_total_on (P :: 'a \<Rightarrow> bool) (\<^bsub>L\<^esub>\<lessapprox>)"
+  shows "left_total_on P (\<le>\<^bsub>L\<^esub>)"
+  using assms by (intro left_total_onI) (auto)
 
 lemma left_total_left_if_left_total_left_GaloisI:
   assumes "left_total (\<^bsub>L\<^esub>\<lessapprox>)"
   shows "left_total (\<le>\<^bsub>L\<^esub>)"
-  using assms by (intro left_totalI) (auto elim!: left_totalE)
+  using assms by (urule left_total_on_left_if_left_total_left_GaloisI)
+
+corollary bi_total_on_left_GaloisI:
+  assumes "left_total_on (P :: 'a \<Rightarrow> bool) (\<le>\<^bsub>L\<^esub>)"
+  and "rel_surjective_at (Q :: 'b \<Rightarrow> bool) (\<le>\<^bsub>R\<^esub>)"
+  and "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and "((\<le>\<^bsub>L\<^esub>) \<unlhd>\<^sub>h (\<le>\<^bsub>R\<^esub>)) l r"
+  and "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+  shows "bi_total_on P Q (\<^bsub>L\<^esub>\<lessapprox>)"
+  using assms by (auto intro: surjective_at_left_GaloisI left_total_on_left_GaloisI)
 
 corollary bi_total_left_GaloisI:
   assumes "left_total (\<le>\<^bsub>L\<^esub>)"
@@ -603,14 +633,28 @@ corollary bi_total_left_GaloisI:
   and "((\<le>\<^bsub>L\<^esub>) \<unlhd>\<^sub>h (\<le>\<^bsub>R\<^esub>)) l r"
   and "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
   shows "bi_total (\<^bsub>L\<^esub>\<lessapprox>)"
-  using assms by (auto intro: surjective_left_GaloisI left_total_left_GaloisI)
+  using assms by (urule bi_total_on_left_GaloisI)
+
+corollary bi_total_on_left_Galois_if_galois_connectionI:
+  assumes "left_total_on (P :: 'a \<Rightarrow> bool) (\<le>\<^bsub>L\<^esub>)"
+  and "rel_surjective_at (Q :: 'b \<Rightarrow> bool) (\<le>\<^bsub>R\<^esub>)"
+  and "((\<le>\<^bsub>L\<^esub>) \<stileturn> (\<le>\<^bsub>R\<^esub>)) l r"
+  shows "bi_total_on P Q (\<^bsub>L\<^esub>\<lessapprox>)"
+  using assms by (intro bi_total_on_left_GaloisI) auto
 
 corollary bi_total_left_Galois_if_galois_connectionI:
   assumes "left_total (\<le>\<^bsub>L\<^esub>)"
   and "rel_surjective (\<le>\<^bsub>R\<^esub>)"
   and "((\<le>\<^bsub>L\<^esub>) \<stileturn> (\<le>\<^bsub>R\<^esub>)) l r"
   shows "bi_total (\<^bsub>L\<^esub>\<lessapprox>)"
-  using assms by (intro bi_total_left_GaloisI) auto
+  using assms by (urule bi_total_on_left_Galois_if_galois_connectionI)
+
+corollary left_total_on_left_rel_surjective_right_if_bi_totalE:
+  assumes "bi_total_on (P :: 'a \<Rightarrow> bool) (Q :: 'b \<Rightarrow> bool) (\<^bsub>L\<^esub>\<lessapprox>)"
+  obtains "left_total_on P (\<le>\<^bsub>L\<^esub>)" "rel_surjective_at Q (\<le>\<^bsub>R\<^esub>)"
+  using assms rel_surjective_at_right_if_surjective_at_left_Galois
+    left_total_on_left_if_left_total_left_GaloisI
+  by auto
 
 corollary left_total_left_rel_surjective_right_if_bi_totalE:
   assumes "bi_total (\<^bsub>L\<^esub>\<lessapprox>)"
@@ -618,13 +662,20 @@ corollary left_total_left_rel_surjective_right_if_bi_totalE:
   using assms rel_surjective_right_if_surjective_left_Galois
     left_total_left_if_left_total_left_GaloisI
   by blast
+(*  using assms apply (urule left_total_on_left_rel_surjective_right_if_bi_totalE) does not work? *)
 
-lemma injective_left_Galois_if_rel_injective_left:
+lemma injective_on_left_Galois_if_rel_injective_left:
+  assumes "rel_injective_on (P :: 'a \<Rightarrow> bool) (\<le>\<^bsub>L\<^esub>)"
+  shows "rel_injective_on (P :: 'a \<Rightarrow> bool) (\<^bsub>L\<^esub>\<lessapprox>)"
+  using assms by (auto dest: rel_injective_onD)
+
+
+corollary injective_left_Galois_if_rel_injective_left:
   assumes "rel_injective (\<le>\<^bsub>L\<^esub>)"
   shows "rel_injective (\<^bsub>L\<^esub>\<lessapprox>)"
-  using assms by (auto dest: rel_injectiveD)
-  (* this was suprisingly easy - assumption to strong? *)
-  (*looks good!*)
+  using assms by (urule injective_on_left_Galois_if_rel_injective_left)
+
+thm left_GaloisE
 
 lemma galois_injective_rev:
   assumes "rel_injective (\<^bsub>L\<^esub>\<lessapprox>)"
