@@ -22,6 +22,10 @@ lemma rel_injective_on_eq_rel_injective_if_eq_top [uhint]:
   "P \<equiv> (\<top> ::'a \<Rightarrow> bool) \<Longrightarrow> rel_injective_on P \<equiv> (rel_injective :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
   unfolding rel_injective_eq_rel_injective_on by simp
 
+lemma right_unique_at_eq_right_unique_if_eq_top [uhint]:
+  "Q \<equiv> (\<top> ::'b \<Rightarrow> bool) \<Longrightarrow> right_unique_at Q \<equiv> (right_unique :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
+  unfolding right_unique_eq_right_unique_at by simp
+
 lemma left_total_on_eq_left_total_if_eq_top [uhint]:
   "P \<equiv> (\<top> ::'a \<Rightarrow> bool) \<Longrightarrow> left_total_on P \<equiv> (left_total :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
   unfolding left_total_eq_left_total_on by simp
@@ -93,6 +97,8 @@ lemma bi_uniqueE [elim]:
 
 
 paragraph \<open>Equality\<close>
+
+
 
 context
   fixes R :: "'a \<Rightarrow> 'b \<Rightarrow> bool" and P :: "'a \<Rightarrow> bool" and Q :: "'b \<Rightarrow> bool"
@@ -277,14 +283,12 @@ context
 begin
 
 lemma Fun_Rel_imp_all_on_if_rel_surjective_atI:
-  assumes "rel_surjective_at Q R"
-  and "(R \<Rrightarrow> (\<longleftarrow>)) P Q"
+  assumes "rel_surjective_at Q (R\<restriction>\<^bsub>P\<^esub>)"
   shows "((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<forall>\<^bsub>P\<^esub> \<forall>\<^bsub>Q\<^esub>"
   using assms by (intro Dep_Fun_Rel_relI) fast
 
 lemma Fun_Rel_rev_imp_all_on_if_left_total_onI:
-  assumes "left_total_on P R"
-  and "(R \<Rrightarrow> (\<longrightarrow>)) P Q"
+  assumes "left_total_on P (R\<upharpoonleft>\<^bsub>Q\<^esub>)"
   shows "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) \<forall>\<^bsub>P\<^esub> \<forall>\<^bsub>Q\<^esub>"
   using assms by (intro Dep_Fun_Rel_relI) fast
 
@@ -296,12 +300,12 @@ lemma Fun_Rel_iff_all_on_if_bi_total_onI:
 
 lemma ex_rel_dom_pred_if_Fun_Rel_imp_all_on:
   assumes "((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<forall>\<^bsub>P\<^esub> \<forall>\<^bsub>Q\<^esub>"
-  shows "\<And>y. Q y \<Longrightarrow> \<exists>x. R x y \<and> P x"
+  shows "rel_surjective_at Q (R\<restriction>\<^bsub>P\<^esub>)"
 proof -
   let ?P2 = "\<lambda>y. \<exists>x. R x y \<and> P x"
   have "(R \<Rrightarrow> (\<longrightarrow>)) P ?P2" by blast
   with assms have "(\<forall>\<^bsub>P\<^esub> x. P x) \<longrightarrow> (\<forall>\<^bsub>Q\<^esub> y. ?P2 y)" by blast
-  then show "Q y \<Longrightarrow> \<exists>x. R x y \<and> P x" for y by blast
+  then show "rel_surjective_at Q (R\<restriction>\<^bsub>P\<^esub>)" by fast
 qed
 
 corollary rel_surjective_at_if_Fun_Rel_imp_all_on:
@@ -311,12 +315,12 @@ corollary rel_surjective_at_if_Fun_Rel_imp_all_on:
 
 lemma ex_rel_codom_pred_if_Fun_Rel_rev_imp_all_on:
   assumes "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) \<forall>\<^bsub>P\<^esub> \<forall>\<^bsub>Q\<^esub>"
-  shows "\<And>x. P x \<Longrightarrow> \<exists>y. R x y \<and> Q y"
+  shows "left_total_on P (R\<upharpoonleft>\<^bsub>Q\<^esub>)"
 proof -
   let ?P1 = "\<lambda>x. \<exists>y. R x y \<and> Q y"
   have "(R \<Rrightarrow> (\<longleftarrow>)) ?P1 Q" by blast
   with assms have "(\<forall>\<^bsub>P\<^esub> x. ?P1 x) \<longleftarrow> (\<forall>\<^bsub>Q\<^esub> y. Q y)" by blast
-  then show "P x \<Longrightarrow> \<exists>y. R x y \<and> Q y" for x by blast
+  then show "left_total_on P (R\<upharpoonleft>\<^bsub>Q\<^esub>)" by fast
 qed
 
 corollary left_total_on_if_Fun_Rel_rev_imp_all_on:
@@ -675,24 +679,62 @@ corollary injective_left_Galois_if_rel_injective_left:
   shows "rel_injective (\<^bsub>L\<^esub>\<lessapprox>)"
   using assms by (urule injective_on_left_Galois_if_rel_injective_left)
 
-thm left_GaloisE
+
+
+lemma galois_injective_on_rev:
+  assumes inj: "rel_injective_on (P :: 'a \<Rightarrow> bool) (\<^bsub>L\<^esub>\<lessapprox>)"
+  and mono: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and gal_prop: "((\<le>\<^bsub>L\<^esub>) \<unlhd>\<^sub>h (\<le>\<^bsub>R\<^esub>)) l r"
+shows  "rel_injective_on P (\<le>\<^bsub>L\<^esub>)"
+proof
+  fix x x' y
+  assume "P x" and "P x'" and "x \<le>\<^bsub>L\<^esub> y" and "x' \<le>\<^bsub>L\<^esub> y"
+  with \<open>x \<le>\<^bsub>L\<^esub> y\<close> mono gal_prop have "x \<^bsub>L\<^esub>\<lessapprox> l y" by blast
+  from mono \<open>x' \<le>\<^bsub>L\<^esub> y\<close>  \<open>x' \<le>\<^bsub>L\<^esub> y\<close> gal_prop  have "x' \<^bsub>L\<^esub>\<lessapprox> l y" by blast
+  with \<open>x \<^bsub>L\<^esub>\<lessapprox> l y\<close> \<open>P x\<close> \<open>P x'\<close> inj show "x = x'" by (auto dest: rel_injective_onD)
+qed
 
 lemma galois_injective_rev:
-  assumes "rel_injective (\<^bsub>L\<^esub>\<lessapprox>)"
+  assumes inj: "rel_injective (\<^bsub>L\<^esub>\<lessapprox>)"
+  and mono: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and gal_prop: "((\<le>\<^bsub>L\<^esub>) \<unlhd>\<^sub>h (\<le>\<^bsub>R\<^esub>)) l r"
   shows  "rel_injective (\<le>\<^bsub>L\<^esub>)"
-  sorry
+  using assms by (urule galois_injective_on_rev)
 
-lemma galois_right_unique:
-  assumes run: "right_unique (\<le>\<^bsub>L\<^esub>)"
+lemma galois_right_unique_at:
+  assumes "right_unique_at (Q :: 'b \<Rightarrow> bool) (\<le>\<^bsub>R\<^esub>)"
+  and  "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
+  shows "right_unique_at Q (\<^bsub>L\<^esub>\<lessapprox>)"
+  using assms by (auto dest: right_unique_atD)
+
+corollary galois_right_unique:
+  assumes run: "right_unique (\<le>\<^bsub>R\<^esub>)"
+  and gal_prop: "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
   shows "right_unique (\<^bsub>L\<^esub>\<lessapprox>)"
-  using assms  apply (intro right_uniqueI, elim left_GaloisE right_uniqueD) sorry
+  using assms by (urule galois_right_unique_at)
+
+thm left_GaloisI
+
+lemma galois_right_unique_at_rev:
+  assumes run: "right_unique_at (Q :: 'b \<Rightarrow> bool) (\<^bsub>L\<^esub>\<lessapprox>)"
+  and mono: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+shows "right_unique_at Q (\<le>\<^bsub>R\<^esub>)"
+  using assms by (auto dest: right_unique_atD)
+
+corollary galois_right_unique_rev:
+  assumes run: "right_unique (\<^bsub>L\<^esub>\<lessapprox>)"
+  and mono: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+  shows "right_unique (\<le>\<^bsub>R\<^esub>)"
+  using assms by (urule galois_right_unique_at_rev)
 
 corollary galois_bi_unique:
   assumes inje: "rel_injective (\<le>\<^bsub>L\<^esub>)"
-  and run: "right_unique (\<le>\<^bsub>L\<^esub>)"
-shows "bi_unique (\<^bsub>L\<^esub>\<lessapprox>)"
+  and run: "right_unique (\<le>\<^bsub>R\<^esub>)"
+  and gal_prop: "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
+  and  mono: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  shows "bi_unique (\<^bsub>L\<^esub>\<lessapprox>)"
   apply (intro bi_uniqueI)
-  using run apply (rule galois_right_unique)
+  using run gal_prop apply (rule galois_right_unique)
   using inje by (rule injective_left_Galois_if_rel_injective_left)
 
 end
