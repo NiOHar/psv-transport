@@ -34,6 +34,9 @@ lemma rel_surjective_at_eq_rel_surjective_if_eq_top [uhint]:
   "P \<equiv> (\<top> ::'b \<Rightarrow> bool) \<Longrightarrow> rel_surjective_at P \<equiv> (rel_surjective :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
   unfolding rel_surjective_eq_rel_surjective_at by simp
 
+lemma restrict_right_top_eq[uhint]: "(R::'a \<Rightarrow> 'b \<Rightarrow> bool) \<upharpoonleft>\<^bsub>(\<top>::'b \<Rightarrow> bool)\<^esub> = R" by fastforce
+
+declare Binary_Relations_Order_Base.restrict_left_top_eq [uhint]
 
 paragraph \<open>Basic Library\<close>
 
@@ -345,15 +348,18 @@ qed
 
 end
 
+
+
+
 corollary Fun_Rel_imp_all_if_rel_surjective:
   assumes "rel_surjective R"
   shows "((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) All All"
-  using assms by (urule Fun_Rel_imp_all_on_if_rel_surjective_atI) auto
+  using assms by (urule Fun_Rel_imp_all_on_if_rel_surjective_atI)
 
 corollary Fun_Rel_rev_imp_all_if_left_total:
   assumes "left_total R"
   shows "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) All All"
-  using assms by (urule Fun_Rel_rev_imp_all_on_if_left_total_onI) auto
+  using assms by (urule Fun_Rel_rev_imp_all_on_if_left_total_onI)
 
 corollary Fun_Rel_iff_all_if_bi_total:
   assumes "bi_total R"
