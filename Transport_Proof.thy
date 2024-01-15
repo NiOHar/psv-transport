@@ -399,7 +399,7 @@ corollary Fun_Rel_imp_all_on_iff_rel_surjective_at_restrict_left:
     Fun_Rel_Fun_Rel_if_le_left_if_Fun_Rel_Fun_Rel
     rel_surjective_at_restrict_left_if_Fun_Rel_imp_all_on)
 
-lemma left_total_on_restrict_left_if_Fun_Rel_rev_imp_all_on:
+lemma left_total_on_restrict_right_if_Fun_Rel_rev_imp_all_on:
   assumes "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) \<forall>\<^bsub>P\<^esub> \<forall>\<^bsub>Q\<^esub>"
   shows "left_total_on P R\<upharpoonleft>\<^bsub>Q\<^esub>"
 proof -
@@ -409,11 +409,11 @@ proof -
   then show "left_total_on P R\<upharpoonleft>\<^bsub>Q\<^esub>" by fast
 qed
 
-corollary Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_left:
+corollary Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right:
   "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) \<forall>\<^bsub>P\<^esub> \<forall>\<^bsub>Q\<^esub> \<longleftrightarrow> left_total_on P R\<upharpoonleft>\<^bsub>Q\<^esub>"
   by (blast intro: Fun_Rel_restricts_rev_imp_all_on_if_left_total_onI
     Fun_Rel_Fun_Rel_if_le_left_if_Fun_Rel_Fun_Rel
-    left_total_on_restrict_left_if_Fun_Rel_rev_imp_all_on)
+    left_total_on_restrict_right_if_Fun_Rel_rev_imp_all_on)
 
 lemma bi_total_on_restricts_if_Fun_Rel_iff_if_bi_total_on:
   assumes "bi_total_on P Q R"
@@ -473,7 +473,7 @@ corollary Fun_Rel_imp_all_iff_rel_surjective:
 corollary left_total_if_Fun_Rel_rev_imp_all:
   assumes "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) All All"
   shows "left_total R"
-  using assms by (urule left_total_on_restrict_left_if_Fun_Rel_rev_imp_all_on)
+  using assms by (urule left_total_on_restrict_right_if_Fun_Rel_rev_imp_all_on)
 
 corollary Fun_Rel_rev_imp_all_iff_left_total:
   "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) All All \<longleftrightarrow> left_total R"
