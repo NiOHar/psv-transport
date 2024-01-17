@@ -553,20 +553,18 @@ corollary Fun_Rel_restricts_iff_ex_on_if_bi_total_on:
 text \<open>Note: the reverse directions do not hold.\<close>
 
 lemma ex_Fun_Rel_imp_ex_on_and_not_left_total_on:
-  "\<exists>R :: 'a \<Rightarrow> 'b \<Rightarrow> bool. \<exists>P :: 'a \<Rightarrow> bool. \<exists>Q :: 'b \<Rightarrow> bool.
-  ((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub> \<and> \<not>(left_total_on P R)"
-(*
+  assumes " a = (x::'a) \<or> a = y \<or> a = z"
+  shows "(\<exists>R :: 'a \<Rightarrow> 'a \<Rightarrow> bool. \<exists>P :: 'a \<Rightarrow> bool. \<exists>Q :: 'a \<Rightarrow> bool.
+  ((R\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub> \<and> \<not>(left_total_on P R\<upharpoonleft>\<^bsub>Q\<^esub>))"
 proof -
   (*TODO Nils: prove this counterexample (you can concretise the types above to, say, bool*)
-  let ?R = undefined
-  let ?P = undefined
-  let ?Q = undefined
-  have "((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub>" sorry
-  moreover have "\<not>(left_total_on P R)" sorry
+  let ?R = "\<lambda> (a::'a) (b::'a) . if (a = x) then True else  False"
+  let ?P = "\<lambda> a . a = y | a = x"
+  let ?Q = "\<lambda> a . True"
+  have "((?R\<upharpoonleft>\<^bsub>?Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>?P\<^esub> \<exists>\<^bsub>?Q\<^esub>" sorry
+  moreover have "\<not>(left_total_on ?P ?R\<upharpoonleft>\<^bsub>?Q\<^esub>)" sorry
   ultimately show ?thesis by blast
 qed
-*)
-oops
 
 end
 
@@ -789,7 +787,31 @@ context
   fixes P :: "'a \<Rightarrow> bool" and Q :: "'b \<Rightarrow> bool"
 begin
 
-(*TODO Nils*)
+thm left_GaloisI
+
+(* There surely is a better assumption than this for injectivity... -
+ but I couldn't find it or a reasonable predicate *)
+lemma right_unique_on_left_Galois_if_right_unique_on_left:
+  assumes run: "right_unique_on P (\<le>\<^bsub>L\<^esub>)"
+  and inj: "injective r"
+  shows "right_unique_on P (\<^bsub>L\<^esub>\<lessapprox>)"
+proof
+  fix x y y'
+  assume "P x" "x \<^bsub>L\<^esub>\<lessapprox> y" "x \<^bsub>L\<^esub>\<lessapprox> y'"
+  with run have "r y = r y'" by (auto dest: right_unique_onD)
+  with inj show "y = y'" by (auto dest: injectiveD)
+qed
+
+corollary galois_bi_unique_on:
+  assumes inje: "rel_injective_on P (\<le>\<^bsub>L\<^esub>)"
+  and run: "right_unique_on P (\<le>\<^bsub>L\<^esub>)"
+  and injectiveR: "injective r"
+  and gal_prop: "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
+  and  mono: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  shows "bi_unique_on P (\<^bsub>L\<^esub>\<lessapprox>)"
+  apply (intro bi_unique_onI)
+  using run injectiveR apply (rule right_unique_on_left_Galois_if_right_unique_on_left)
+  using inje by (rule injective_on_left_Galois_if_rel_injective_on_left)
 
 corollary galois_bi_unique:
   assumes inje: "rel_injective (\<le>\<^bsub>L\<^esub>)"
