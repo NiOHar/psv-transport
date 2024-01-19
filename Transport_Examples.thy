@@ -7,13 +7,6 @@ theory Transport_Examples
     "HOL-Eisbach.Eisbach"
 begin
 
-(*TODO Kevin:
-1. HO unification crashes for bound variables in HO case
-2. Logger not set up in functors in local contexts
-3. Fasttype on bound variable used by some unifier
-4. Enter MATCH problem (see example)
-*)
-
 (* locale transport_PER =
   fixes L :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
   and R :: "'b \<Rightarrow> 'b \<Rightarrow> bool"
@@ -82,10 +75,12 @@ lemma rev_imp_top [trp_side_condition]: "(R \<Rrightarrow> (\<longleftarrow>)) \
 
 text \<open>Unification Tuning\<close>
 
-(* declare [[ML_map_context \<open>Logger.set_log_levels Logger.root_logger Logger.ALL\<close>]] *)
+declare [[ML_map_context \<open>Logger.set_log_levels Logger.root_logger Logger.ALL\<close>]]
 (* declare [[show_types]] *)
 declare [[ucombine add = \<open>Standard_Unification_Combine.eunif_data
-  (K Higher_Order_Unification.unify)
+  (fn _ => fn binders => Tactic_Util.set_kernel_ho_unif_bounds 1 1
+    #> Tactic_Util.silence_kernel_ho_bounds_exceeded
+    #> Higher_Order_Unification.unify binders)
   (Standard_Unification_Combine.metadata \<^binding>\<open>HO_unif\<close> Prio.VERY_LOW)\<close>]]
 
 ML\<open>
@@ -140,7 +135,7 @@ method transport_step =
 lemma "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"
   apply (rule rev_impD[of _ "_ (_ _) (\<lambda>x. _ x x)"])
   apply transport_step
-  (* apply (urule trp_register) *)
+  (* apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI) *)
   oops
 
   (* apply transport_step *)
