@@ -103,7 +103,7 @@ declare [[uhint where concl_unifier =
 text \<open>Examples\<close>
 
 ML_val\<open>
-  Transport.mk_term_skeleton 0 @{term "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"}
+  Transport.mk_term_skeleton 0 @{term "\<forall>\<^bsub>pos\<^esub> (x :: int) . x < x + 1"}
   |> Syntax.pretty_term @{context}
 \<close>
 
@@ -123,6 +123,21 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"
   apply (urule tZN_left_total)
   apply auto
   done
+
+lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
+  apply (rule rev_impD[of _ "_ (_ _) (\<lambda>x. _ x x)"])
+  apply (urule related_Fun_Rel_combI)
+  apply (urule related_Fun_Rel_lambdaI)
+  apply uassm
+    apply (urule related_Fun_Rel_lambdaI)
+     apply (urule related_Fun_Rel_combI)
+      apply uassm
+  sorry
+
+  
+  
+  
+  
 
 named_theorems trp_register
 declare Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI[trp_register]

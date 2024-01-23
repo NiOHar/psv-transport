@@ -553,17 +553,18 @@ corollary Fun_Rel_restricts_iff_ex_on_if_bi_total_on:
 text \<open>Note: the reverse directions do not hold.\<close>
 
 lemma ex_Fun_Rel_imp_ex_on_and_not_left_total_on:
-  assumes " a = (x::'a) \<or> a = y \<or> a = z"
+  assumes "(a = (x::'a) \<or> a = y \<or> a = z) \<and> x \<noteq> y \<and> y \<noteq> z \<and> x \<noteq> z"
   shows "(\<exists>R :: 'a \<Rightarrow> 'a \<Rightarrow> bool. \<exists>P :: 'a \<Rightarrow> bool. \<exists>Q :: 'a \<Rightarrow> bool.
-  ((R\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub> \<and> \<not>(left_total_on P R\<upharpoonleft>\<^bsub>Q\<^esub>))"
+  ((R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub> \<and> \<not>(left_total_on P R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub>))"
 proof -
   (*TODO Nils: prove this counterexample (you can concretise the types above to, say, bool*)
-  let ?R = "\<lambda> (a::'a) (b::'a) . if (a = x) then True else  False"
-  let ?P = "\<lambda> a . a = y | a = x"
-  let ?Q = "\<lambda> a . True"
-  have "((?R\<upharpoonleft>\<^bsub>?Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>?P\<^esub> \<exists>\<^bsub>?Q\<^esub>" sorry
-  moreover have "\<not>(left_total_on ?P ?R\<upharpoonleft>\<^bsub>?Q\<^esub>)" sorry
-  ultimately show ?thesis by blast
+  let ?R = "\<lambda> (a::'a) (b::'a) . (a = x \<and> b = x)"
+  let ?P = "\<lambda> (a::'a) . True"
+  let ?Q = "\<lambda> (a::'a) . True"
+  have 1: "((?R\<restriction>\<^bsub>?P\<^esub>\<upharpoonleft>\<^bsub>?Q\<^esub>  \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>?P\<^esub> \<exists>\<^bsub>?Q\<^esub>" apply (intro Dep_Fun_Rel_relI, elim Dep_Fun_Rel_relE) apply auto sorry
+  have "(\<nexists> b .(?P y) \<and> (y = x \<and> b = x) \<and> (?Q b)) " using assms by auto
+  then have "\<not>(left_total_on ?P ?R\<restriction>\<^bsub>?P\<^esub>\<upharpoonleft>\<^bsub>?Q\<^esub>)" by auto
+  with 1 show ?thesis by blast
 qed
 
 end
