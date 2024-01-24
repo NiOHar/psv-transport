@@ -51,6 +51,8 @@ interpretation t : transport L R l r for L R l r .
 lemma perZN: "((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) nat int"
   unfolding pos_def by fastforce
 
+(*lemma perListSet ""((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) ('a list) ('a set)"*)
+
 lemmas related_Fun_Rel_combI = Dep_Fun_Rel_relD[where ?S="\<lambda>_ _. S" for S, rotated]
 lemma related_Fun_Rel_lambdaI:
   assumes "\<And>x y. R x y \<Longrightarrow> S (f x) (g y)"
@@ -103,7 +105,7 @@ declare [[uhint where concl_unifier =
 text \<open>Examples\<close>
 
 ML_val\<open>
-  Transport.mk_term_skeleton 0 @{term "\<forall>\<^bsub>pos\<^esub> (x :: int) . x < x + 1"}
+  Transport.mk_term_skeleton 0 @{term "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"}
   |> Syntax.pretty_term @{context}
 \<close>
 
@@ -118,21 +120,38 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"
   apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI)
   apply (urule trp_side_condition)
   apply (urule trp_side_condition)
-  apply (urule refl)
+  apply (urule refl)            
   apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
   apply (urule tZN_left_total)
   apply auto
   done
 
+ML\<open>structure A = Higher_Order_Unification\<close>
+
+lemma aux: "tZN.left_Galois 0 0" sorry
+lemma aux2: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)" sorry
+
 lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
-  apply (rule rev_impD[of _ "_ (_ _) (\<lambda>x. _ x x)"])
+  apply (rule rev_impD[of _ "_ (_ _) (\<lambda>x. _ x (_ x _))"])
   apply (urule related_Fun_Rel_combI)
-  apply (urule related_Fun_Rel_lambdaI)
-  apply uassm
     apply (urule related_Fun_Rel_lambdaI)
+  thm related_Fun_Rel_combI[of _ "x+0" "u y w" _ "(=) x" "h y"  for h x u y w]
+     apply (urule related_Fun_Rel_combI[of _ "x+0" "u y w" _ "(=) x" "h y"  for h x u y w])
+      apply (urule related_Fun_Rel_combI)
+       apply (urule aux)
+      apply (urule related_Fun_Rel_combI)
+       apply uassm
+      apply (urule aux2)
      apply (urule related_Fun_Rel_combI)
       apply uassm
-  sorry
+  apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI)
+  apply (urule trp_side_condition)
+  apply (urule trp_side_condition)
+    apply (urule refl)
+ apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
+   apply (urule tZN_left_total)
+  by simp
+
 
   
   
