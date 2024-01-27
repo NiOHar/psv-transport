@@ -51,7 +51,7 @@ interpretation t : transport L R l r for L R l r .
 lemma perZN: "((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) nat int"
   unfolding pos_def by fastforce
 
-(*lemma perListSet ""((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) ('a list) ('a set)"*)
+(*lemma perListSet: "((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) set list" *)
 
 lemmas related_Fun_Rel_combI = Dep_Fun_Rel_relD[where ?S="\<lambda>_ _. S" for S, rotated]
 lemma related_Fun_Rel_lambdaI:
@@ -105,7 +105,7 @@ declare [[uhint where concl_unifier =
 text \<open>Examples\<close>
 
 ML_val\<open>
-  Transport.mk_term_skeleton 0 @{term "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"}
+  Transport.mk_term_skeleton 0 @{term "\<exists>\<^bsub>pos\<^esub> (x :: int) . x = 0"}
   |> Syntax.pretty_term @{context}
 \<close>
 
@@ -128,8 +128,11 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"
 
 ML\<open>structure A = Higher_Order_Unification\<close>
 
-lemma aux: "tZN.left_Galois 0 0" sorry
-lemma aux2: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)" sorry
+lemma aux: "tZN.left_Galois 0 0"
+  by (simp add: bin_rel_restrict_leftI in_codomI pos_def tZN.left_Galois_iff_in_codom_and_left_rel_right)
+lemma aux2: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)" 
+  apply (intro Dep_Fun_Rel_relI)
+  by (metis (full_types) bin_rel_restrict_left_pred_def galois_rel.left_GaloisE of_nat_add perZN tZN.galois_connectionE tZN.galois_equivalence_def tZN.partial_equivalence_rel_equivalence_def tZN.right_left_Galois_if_right_relI)
 
 lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
   apply (rule rev_impD[of _ "_ (_ _) (\<lambda>x. _ x (_ x _))"])
@@ -152,7 +155,42 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
    apply (urule tZN_left_total)
   by simp
 
+lemma aux3: "tZN.left_Galois\<restriction>\<^bsub>pos\<^esub> 0 0"
+  using aux by blast
 
+lemma tZN_restrict[simp,uhint]: "tZN.left_Galois\<restriction>\<^bsub>pos\<^esub> = tZN.left_Galois"
+  using bin_rel_restrict_leftE by blast
+
+lemma tZN_injective_on_pos: "rel_injective_on (pos :: int \<Rightarrow> bool) (tZN.left_Galois\<restriction>\<^bsub>pos\<^esub>)"
+  by (intro rel_injective_onI) auto
+
+lemma tZN_injective_at_top: "rel_injective_at (\<top> :: nat \<Rightarrow> bool) (tZN.left_Galois\<restriction>\<^bsub>pos\<^esub>)"
+  by (intro rel_injective_atI) auto
+
+
+lemma tZN_surjective_at_top: "rel_surjective_at (\<top> :: nat \<Rightarrow> bool) (tZN.left_Galois\<restriction>\<^bsub>pos\<^esub>)"
+  apply (intro rel_surjective_atI)
+  using pos_def by force
+
+lemma "\<exists>\<^bsub>pos\<^esub> (x :: int) . x = 0"
+  apply (rule rev_impD[of _ "_ _ (\<lambda> x . _ x _)"])
+   apply (urule related_Fun_Rel_combI)
+    apply (urule related_Fun_Rel_lambdaI)
+     apply (urule related_Fun_Rel_combI)
+      apply (urule aux3)
+     apply (urule related_Fun_Rel_combI)
+      apply uassm
+     apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI)
+      apply (urule tZN_injective_at_top)
+  apply (urule rev_imp_top)
+    apply (urule refl)
+     apply (urule Fun_Rel_restricts_rev_imp_ex_on_if_rel_surjective_at)
+   apply (urule tZN_surjective_at_top)
+  apply blast
+  done
+  
+    
+   
   
   
   
