@@ -5,6 +5,7 @@ theory Transport_Examples
     Transport.Transport_Prototype
     Main
     "HOL-Eisbach.Eisbach"
+    "HOL-Library.FSet"
 begin
 
 (* locale transport_PER =
@@ -51,7 +52,6 @@ interpretation t : transport L R l r for L R l r .
 lemma perZN: "((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) nat int"
   unfolding pos_def by fastforce
 
-(*lemma perListSet: "((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) set list" *)
 
 lemmas related_Fun_Rel_combI = Dep_Fun_Rel_relD[where ?S="\<lambda>_ _. S" for S, rotated]
 lemma related_Fun_Rel_lambdaI:
@@ -105,7 +105,7 @@ declare [[uhint where concl_unifier =
 text \<open>Examples\<close>
 
 ML_val\<open>
-  Transport.mk_term_skeleton 0 @{term "\<exists>\<^bsub>pos\<^esub> (x :: int) . x = 0"}
+  Transport.mk_term_skeleton 0 @{term "\<forall> (xs :: 'a list) . LFSL xs xs"}
   |> Syntax.pretty_term @{context}
 \<close>
 
@@ -132,7 +132,8 @@ lemma aux: "tZN.left_Galois 0 0"
   by (simp add: bin_rel_restrict_leftI in_codomI pos_def tZN.left_Galois_iff_in_codom_and_left_rel_right)
 lemma aux2: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)" 
   apply (intro Dep_Fun_Rel_relI)
-  by (metis (full_types) bin_rel_restrict_left_pred_def galois_rel.left_GaloisE of_nat_add perZN tZN.galois_connectionE tZN.galois_equivalence_def tZN.partial_equivalence_rel_equivalence_def tZN.right_left_Galois_if_right_relI)
+  by (metis (full_types) bin_rel_restrict_leftE galois_rel.left_GaloisE of_nat_add perZN tZN.galois_connectionE tZN.galois_equivalence_def tZN.partial_equivalence_rel_equivalence_def tZN.right_left_Galois_if_right_relI)
+
 
 lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
   apply (rule rev_impD[of _ "_ (_ _) (\<lambda>x. _ x (_ x _))"])
@@ -189,10 +190,38 @@ lemma "\<exists>\<^bsub>pos\<^esub> (x :: int) . x = 0"
   apply blast
   done
   
-    
-   
+(* from https://www.isa-afp.org/sessions/transport/#Transport_Lists_Sets_Examples.html *)    
+definition "LFSL xs xs' \<equiv> fset_of_list xs = fset_of_list xs'"
+abbreviation (input) "(LFSR :: 'a fset \<Rightarrow> _) \<equiv> (=)"
+definition "LSL xs xs' \<equiv> set xs = set xs'"
+abbreviation (input) "(LSR :: 'a set \<Rightarrow> _) \<equiv> (=\<^bsub>finite :: 'a set \<Rightarrow> bool\<^esub>)"
+
+interpretation tFSetList : transport LFSL LFSR fset_of_list sorted_list_of_fset .
+
+text \<open>Proofs of equivalences.\<close>
+
+lemma list_fset_PER: "(LFSL \<equiv>\<^bsub>PER\<^esub> LFSR) fset_of_list sorted_list_of_fset"
+  unfolding LFSL_def by fastforce
+
+lemma list_set_PER: "(LSL \<equiv>\<^bsub>PER\<^esub> LSR) set sorted_list_of_set"
+  unfolding LSL_def by fastforce
+
+lemma setListInj: "rel_injective tFSetList.left_Galois"
   
-  
+lemma "\<forall> (xs :: 'a fset) . LFSR xs xs"
+  apply (rule rev_impD[of _ "_ (\<lambda> xs . _ xs xs)"])
+   apply (urule related_Fun_Rel_combI)
+    apply (urule related_Fun_Rel_lambdaI)
+     apply (urule related_Fun_Rel_combI)
+      apply uassm
+       apply (urule related_Fun_Rel_combI)
+     apply uassm
+     apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI)
+  defer defer
+      apply (urule refl)
+      apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
+  sorry
+      
   
   
 
