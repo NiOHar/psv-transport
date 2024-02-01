@@ -143,8 +143,7 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
   apply (rule rev_impD[of _ "_ (_ _) (\<lambda>x. _ x (_ x _))"])
   apply (urule related_Fun_Rel_combI)
     apply (urule related_Fun_Rel_lambdaI)
-  thm related_Fun_Rel_combI[of _ "x+0" "u y w" _ "(=) x" "h y"  for h x u y w]
-     apply (urule related_Fun_Rel_combI[of _ "x+0" "u y w" _ "(=) x" "h y"  for h x u y w])
+     apply (urule related_Fun_Rel_combI)
       apply (urule related_Fun_Rel_combI)
        apply (urule aux)
       apply (urule related_Fun_Rel_combI)
@@ -210,8 +209,9 @@ lemma list_fset_PER: "(LFSL \<equiv>\<^bsub>PER\<^esub> LFSR) fset_of_list sorte
 lemma list_set_PER: "(LSL \<equiv>\<^bsub>PER\<^esub> LSR) set sorted_list_of_set"
   unfolding LSL_def by fastforce
 
-lemma setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'a list \<Rightarrow> bool)" sorry
-lemma setListLeftTot: "left_total_on (\<top> :: 'a fset \<Rightarrow> bool) tFSetList.left_Galois\<upharpoonleft>\<^bsub>(\<top>::('a :: linorder) list \<Rightarrow> bool)\<^esub>" sorry
+lemma setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'a list \<Rightarrow> bool)" by auto
+lemma setListLeftTot: "Binary_Relations_Left_Total.left_total (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> _ \<Rightarrow> _)"
+  by (meson Binary_Relations_Left_Total.left_totalI galois_prop.galois_propE galois_rel.in_dom_left_if_left_Galois list_fset_PER tFSetList.galois_connection_def tFSetList.galois_equivalence_def tFSetList.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence tFSetList.left_total_left_Galois_iff_left_total_leftI tFSetList.partial_equivalence_rel_equivalence_def tFSetList.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right)
 
 
 declare[[show_types]]
@@ -226,7 +226,7 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
      apply (urule Fun_Rel_rev_imp_eq_if_rel_inective)
   apply (urule setListInj)
       apply (urule refl)
-     apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
+     apply (urule Fun_Rel_rev_imp_all_if_left_total)
    apply (urule setListLeftTot)
   by simp
 
