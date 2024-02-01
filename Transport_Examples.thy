@@ -103,7 +103,7 @@ ML\<open>
     and more_args = \<open>structure UC = Standard_Unification_Hints_Concl_Combine\<close>}
 \<close>
 declare [[uhint where concl_unifier =
-  Standard_Unification_Hints_Concl_Mixed_Unification.first_higherp_first_comb_higher_unify]]
+  Standard_Unification_Hints_Concl_Mixed_Unification.first_higherp_decomp_comb_higher_unify]]
 
 
 text \<open>Examples\<close>
@@ -124,7 +124,7 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"
   apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI)
   apply (urule trp_side_condition)
   apply (urule trp_side_condition)
-  apply (urule refl)            
+  apply (urule refl)
   apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
   apply (urule tZN_left_total)
   apply auto
@@ -134,7 +134,7 @@ ML\<open>structure A = Higher_Order_Unification\<close>
 
 lemma aux: "tZN.left_Galois 0 0"
   by (simp add: bin_rel_restrict_leftI in_codomI pos_def tZN.left_Galois_iff_in_codom_and_left_rel_right)
-lemma aux2: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)" 
+lemma aux2: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)"
   apply (intro Dep_Fun_Rel_relI)
   by (metis (full_types) bin_rel_restrict_leftE galois_rel.left_GaloisE of_nat_add perZN tZN.galois_connectionE tZN.galois_equivalence_def tZN.partial_equivalence_rel_equivalence_def tZN.right_left_Galois_if_right_relI)
 
@@ -193,8 +193,8 @@ lemma "\<exists>\<^bsub>pos\<^esub> (x :: int) . x = 0"
    apply (urule tZN_surjective_at_top)
   apply blast
   done
-  
-(* from https://www.isa-afp.org/sessions/transport/#Transport_Lists_Sets_Examples.html *)    
+
+(* from https://www.isa-afp.org/sessions/transport/#Transport_Lists_Sets_Examples.html *)
 definition "LFSL xs xs' \<equiv> fset_of_list xs = fset_of_list xs'"
 abbreviation (input) "(LFSR :: 'a fset \<Rightarrow> _) \<equiv> (=)"
 definition "LSL xs xs' \<equiv> set xs = set xs'"
@@ -229,10 +229,10 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
      apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
    apply (urule setListLeftTot)
   by simp
-  
-      
-  
-  
+
+
+
+
 
 named_theorems trp_register
 declare Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI[trp_register]
