@@ -8,6 +8,8 @@ theory Transport_Examples
     "HOL-Library.FSet"
 begin
 
+
+
 (* locale transport_PER =
   fixes L :: "'a \<Rightarrow> 'a \<Rightarrow> bool"
   and R :: "'b \<Rightarrow> 'b \<Rightarrow> bool"
@@ -47,6 +49,8 @@ end *)
 definition "pos (i :: int) \<equiv> 0 \<le> i"
 
 interpretation tZN : transport "(=\<^bsub>pos\<^esub>)" "(=)" nat int .
+
+context begin
 interpretation t : transport L R l r for L R l r .
 
 lemma perZN: "((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) nat int"
@@ -74,7 +78,7 @@ lemma tZN_rel_injective [trp_side_condition]: "rel_injective tZN.left_Galois"
 lemma rev_imp_top [trp_side_condition]: "(R \<Rrightarrow> (\<longleftarrow>)) \<top> P"
   by auto
 
-
+end
 text \<open>Unification Tuning\<close>
 
 declare [[ML_map_context \<open>Logger.set_log_levels Logger.root_logger Logger.ALL\<close>]]
@@ -196,8 +200,8 @@ abbreviation (input) "(LFSR :: 'a fset \<Rightarrow> _) \<equiv> (=)"
 definition "LSL xs xs' \<equiv> set xs = set xs'"
 abbreviation (input) "(LSR :: 'a set \<Rightarrow> _) \<equiv> (=\<^bsub>finite :: 'a set \<Rightarrow> bool\<^esub>)"
 
-interpretation tFSetList : transport LFSL LFSR fset_of_list sorted_list_of_fset .
-
+interpretation tFSetList : transport LFSR LFSL sorted_list_of_fset fset_of_list .
+interpretation t : transport L R l r for L R l r .
 text \<open>Proofs of equivalences.\<close>
 
 lemma list_fset_PER: "(LFSL \<equiv>\<^bsub>PER\<^esub> LFSR) fset_of_list sorted_list_of_fset"
@@ -206,9 +210,12 @@ lemma list_fset_PER: "(LFSL \<equiv>\<^bsub>PER\<^esub> LFSR) fset_of_list sorte
 lemma list_set_PER: "(LSL \<equiv>\<^bsub>PER\<^esub> LSR) set sorted_list_of_set"
   unfolding LSL_def by fastforce
 
-lemma setListInj: "rel_injective tFSetList.left_Galois"
-  
-lemma "\<forall> (xs :: 'a fset) . LFSR xs xs"
+lemma setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'a list \<Rightarrow> bool)" sorry
+lemma setListLeftTot: "left_total_on (\<top> :: 'a fset \<Rightarrow> bool) tFSetList.left_Galois\<upharpoonleft>\<^bsub>(\<top>::('a :: linorder) list \<Rightarrow> bool)\<^esub>" sorry
+
+
+declare[[show_types]]
+lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
   apply (rule rev_impD[of _ "_ (\<lambda> xs . _ xs xs)"])
    apply (urule related_Fun_Rel_combI)
     apply (urule related_Fun_Rel_lambdaI)
@@ -216,11 +223,13 @@ lemma "\<forall> (xs :: 'a fset) . LFSR xs xs"
       apply uassm
        apply (urule related_Fun_Rel_combI)
      apply uassm
-     apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI)
-  defer defer
+     apply (urule Fun_Rel_rev_imp_eq_if_rel_inective)
+  apply (urule setListInj)
       apply (urule refl)
-      apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
-  sorry
+     apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
+   apply (urule setListLeftTot)
+  by simp
+  
       
   
   
