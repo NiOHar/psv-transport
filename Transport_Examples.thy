@@ -214,7 +214,7 @@ lemma setListLeftTot: "Binary_Relations_Left_Total.left_total (tFSetList.left_Ga
   by (meson Binary_Relations_Left_Total.left_totalI galois_prop.galois_propE galois_rel.in_dom_left_if_left_Galois list_fset_PER tFSetList.galois_connection_def tFSetList.galois_equivalence_def tFSetList.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence tFSetList.left_total_left_Galois_iff_left_total_leftI tFSetList.partial_equivalence_rel_equivalence_def tFSetList.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right)
 
 
-declare[[show_types]]
+
 lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
   apply (rule rev_impD[of _ "_ (\<lambda> xs . _ xs xs)"])
    apply (urule related_Fun_Rel_combI)
