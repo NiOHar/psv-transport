@@ -1069,7 +1069,33 @@ lemma "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longrightarrow>)) (in
   by (intro Dep_Fun_Rel_relI) auto
 
 (*TODO: we should derive specialised theorems for the Galois relator that are in simplified form.*)
-
+(* TODO: restrict bi_relatedness 
+lemma bi_related_imp_restricted: assumes "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
+  and "symmetric_on (Q :: 'b \<Rightarrow> bool) R"
+  and "transitive_on (Q :: 'b \<Rightarrow> bool) R"
+shows "((\<^bsub>L\<^esub>\<lessapprox>)\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>)\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
+proof (intro Dep_Fun_Rel_relI, standard)
+  fix x y x' y'
+  assume "((\<^bsub>L\<^esub>\<lessapprox>)\<upharpoonleft>\<^bsub>Q\<^esub>) x y" and "((\<^bsub>L\<^esub>\<lessapprox>)\<upharpoonleft>\<^bsub>Q\<^esub>) x' y'" and "x \<equiv>\<^bsub>L\<^esub> x'"
+  then have "x \<^bsub>L\<^esub>\<lessapprox> y"  "x' \<^bsub>L\<^esub>\<lessapprox> y'" "Q y" "Q y'" by auto
+  then show "y \<equiv>\<^bsub>R\<^esub> y'" proof (intro bi_relatedI, goal_cases)
+    case 1
+    thm transitive_onD[of Q R "l x" "l x'" y']
+    with assms(2) have "l x' \<le>\<^bsub>R\<^esub> y'" by auto
+    from assms(1) \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> have "l x \<le>\<^bsub>R\<^esub> l x'" by auto
+    with assms(4)  \<open>l x' \<le>\<^bsub>R\<^esub> y'\<close> \<open>Q y\<close> \<open>Q y'\<close> have "l x \<le>\<^bsub>R\<^esub> y'" apply (rule transitive_onD[of)
+    with \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close> assms(2) assms(3) have "y \<le>\<^bsub>R\<^esub> l x" by (auto dest: symmetricD)
+    with assms(4) \<open>l x \<le>\<^bsub>R\<^esub> y'\<close> show ?case by auto
+  next
+    case 2
+    with assms(2) have "l x \<le>\<^bsub>R\<^esub> y" by auto
+    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> assms(1) assms(4) have "l x' \<le>\<^bsub>R\<^esub> y" by fastforce
+    with \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close> assms(2)  assms(3) have "y' \<le>\<^bsub>R\<^esub> l x'" by (auto dest: symmetricD)
+    with assms(4) \<open>l x' \<le>\<^bsub>R\<^esub> y\<close> show ?case by auto
+  qed
+qed
+*)
 lemma bi_related_imp: assumes "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
   and "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
   and "symmetric R"

@@ -199,6 +199,7 @@ abbreviation (input) "(LFSR :: 'a fset \<Rightarrow> _) \<equiv> (=)"
 definition "LSL xs xs' \<equiv> set xs = set xs'"
 abbreviation (input) "(LSR :: 'a set \<Rightarrow> _) \<equiv> (=\<^bsub>finite :: 'a set \<Rightarrow> bool\<^esub>)"
 
+context begin
 interpretation tFSetList : transport LFSR LFSL sorted_list_of_fset fset_of_list .
 interpretation t : transport L R l r for L R l r .
 text \<open>Proofs of equivalences.\<close>
@@ -229,7 +230,43 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
      apply (urule Fun_Rel_rev_imp_all_if_left_total)
    apply (urule setListLeftTot)
   by simp
+end
 
+context
+  fixes f :: "('a::linorder) \<Rightarrow> ('b::linorder)"
+  assumes "injective f"
+begin
+
+interpretation tFSetList : transport LFSR LFSL "\<lambda> xset . (map f (sorted_list_of_fset xset))" "\<lambda> xs .fset_of_list (map (inv f) xs)" .
+interpretation t : transport L R l r for L R l r .
+text \<open>Proofs of equivalences.\<close>
+
+
+lemma mixed_list_fset_PER: "(LFSL \<equiv>\<^bsub>PER\<^esub> LFSR)  (\<lambda> xs .fset_of_list (map (inv f) xs)) (\<lambda> xset . map f (sorted_list_of_fset xset))"
+  unfolding LFSL_def sorry
+
+
+lemma mixed_setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'b list \<Rightarrow> bool)" by auto
+lemma mixed_setListLeftTot: "Binary_Relations_Left_Total.left_total (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> ('b :: linorder) list \<Rightarrow> _)"
+  by (metis Binary_Relations_Left_Total.left_totalI galois_rel.in_dom_left_if_left_Galois mixed_list_fset_PER tFSetList.galois_connectionE tFSetList.galois_equivalenceE tFSetList.galois_propE tFSetList.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence tFSetList.left_total_left_Galois_iff_left_total_leftI tFSetList.partial_equivalence_rel_equivalence_def tFSetList.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right)
+
+lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
+  apply (rule rev_impD[of _ "_ (\<lambda> xs . _ xs xs)"])
+   apply (urule related_Fun_Rel_combI)
+    apply (urule related_Fun_Rel_lambdaI)
+     apply (urule related_Fun_Rel_combI)
+      apply uassm
+       apply (urule related_Fun_Rel_combI)
+     apply uassm
+     apply (urule Fun_Rel_rev_imp_eq_if_rel_inective)
+  apply (urule mixed_setListInj)
+      apply (urule refl)
+     apply (urule Fun_Rel_rev_imp_all_if_left_total)
+   apply (urule mixed_setListLeftTot)
+  by simp
+end
+
+end
 
 
 
