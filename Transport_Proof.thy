@@ -278,7 +278,7 @@ corollary Fun_Rel_imp_eq_if_right_unique:
   shows "(R \<Rrightarrow> R \<Rrightarrow> (\<longrightarrow>)) (=) (=)"
   using assms by (urule Fun_Rel_imp_eq_restrict_if_right_unique_onI) auto
 
-corollary Fun_Rel_rev_imp_eq_if_rel_inective:
+corollary Fun_Rel_rev_imp_eq_if_rel_injective:
   assumes "rel_injective R"
   shows "(R \<Rrightarrow> R \<Rrightarrow> (\<longleftarrow>)) (=) (=)"
   using assms by (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI) auto
@@ -302,7 +302,7 @@ corollary rel_injective_if_Fun_Rel_rev_imp_eq:
   using assms by (urule rel_injective_at_if_Fun_Rel_rev_imp_eq_restrict)
 
 corollary Fun_Rel_rev_imp_eq_iff_rel_injective: "(R \<Rrightarrow> R \<Rrightarrow> (\<longleftarrow>)) (=) (=) \<longleftrightarrow> rel_injective R"
-  using rel_injective_if_Fun_Rel_rev_imp_eq Fun_Rel_rev_imp_eq_if_rel_inective by blast
+  using rel_injective_if_Fun_Rel_rev_imp_eq Fun_Rel_rev_imp_eq_if_rel_injective by blast
 
 corollary bi_unique_if_Fun_Rel_iff_eq:
   assumes "(R \<Rrightarrow> R \<Rrightarrow> (\<longleftrightarrow>)) (=) (=)"
@@ -1069,88 +1069,61 @@ lemma "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longrightarrow>)) (in
   by (intro Dep_Fun_Rel_relI) auto
 
 (*TODO: we should derive specialised theorems for the Galois relator that are in simplified form.*)
-(* TODO: restrict bi_relatedness 
-lemma bi_related_imp_restricted: assumes "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
-  and "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
-  and "symmetric_on (Q :: 'b \<Rightarrow> bool) R"
-  and "transitive_on (Q :: 'b \<Rightarrow> bool) R"
-shows "((\<^bsub>L\<^esub>\<lessapprox>)\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>)\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
-proof (intro Dep_Fun_Rel_relI, standard)
-  fix x y x' y'
-  assume "((\<^bsub>L\<^esub>\<lessapprox>)\<upharpoonleft>\<^bsub>Q\<^esub>) x y" and "((\<^bsub>L\<^esub>\<lessapprox>)\<upharpoonleft>\<^bsub>Q\<^esub>) x' y'" and "x \<equiv>\<^bsub>L\<^esub> x'"
-  then have "x \<^bsub>L\<^esub>\<lessapprox> y"  "x' \<^bsub>L\<^esub>\<lessapprox> y'" "Q y" "Q y'" by auto
-  then show "y \<equiv>\<^bsub>R\<^esub> y'" proof (intro bi_relatedI, goal_cases)
-    case 1
-    thm transitive_onD[of Q R "l x" "l x'" y']
-    with assms(2) have "l x' \<le>\<^bsub>R\<^esub> y'" by auto
-    from assms(1) \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> have "l x \<le>\<^bsub>R\<^esub> l x'" by auto
-    with assms(4)  \<open>l x' \<le>\<^bsub>R\<^esub> y'\<close> \<open>Q y\<close> \<open>Q y'\<close> have "l x \<le>\<^bsub>R\<^esub> y'" apply (rule transitive_onD[of)
-    with \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close> assms(2) assms(3) have "y \<le>\<^bsub>R\<^esub> l x" by (auto dest: symmetricD)
-    with assms(4) \<open>l x \<le>\<^bsub>R\<^esub> y'\<close> show ?case by auto
-  next
-    case 2
-    with assms(2) have "l x \<le>\<^bsub>R\<^esub> y" by auto
-    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> assms(1) assms(4) have "l x' \<le>\<^bsub>R\<^esub> y" by fastforce
-    with \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close> assms(2)  assms(3) have "y' \<le>\<^bsub>R\<^esub> l x'" by (auto dest: symmetricD)
-    with assms(4) \<open>l x' \<le>\<^bsub>R\<^esub> y\<close> show ?case by auto
-  qed
-qed
-*)
-lemma bi_related_imp: assumes "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
-  and "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
-  and "symmetric R"
-  and "transitive R"
+
+lemma bi_related_imp: assumes monoL: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and galL: "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
+  and perR: "partial_equivalence_rel R"
 shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longrightarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
 proof (intro Dep_Fun_Rel_relI, standard)
   fix x y x' y'
   assume "x \<^bsub>L\<^esub>\<lessapprox> y" and "x' \<^bsub>L\<^esub>\<lessapprox> y'" and "x \<equiv>\<^bsub>L\<^esub> x'"
   then show "y \<equiv>\<^bsub>R\<^esub> y'" proof (intro bi_relatedI, goal_cases)
     case 1
-    with assms(2) have "l x' \<le>\<^bsub>R\<^esub> y'" by auto
-    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> assms(1) assms(4) have "l x \<le>\<^bsub>R\<^esub> y'" by fastforce
-    with \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close> assms(2) assms(3) have "y \<le>\<^bsub>R\<^esub> l x" by (auto dest: symmetricD)
-    with assms(4) \<open>l x \<le>\<^bsub>R\<^esub> y'\<close> show ?case by auto
+    with galL have "l x' \<le>\<^bsub>R\<^esub> y'" by auto
+    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> monoL perR have "l x \<le>\<^bsub>R\<^esub> y'" by fastforce
+    with \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close> galL perR have "y \<le>\<^bsub>R\<^esub> l x" by (auto dest: symmetricD)
+    with perR \<open>l x \<le>\<^bsub>R\<^esub> y'\<close> show ?case by auto
   next
     case 2
-    with assms(2) have "l x \<le>\<^bsub>R\<^esub> y" by auto
-    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> assms(1) assms(4) have "l x' \<le>\<^bsub>R\<^esub> y" by fastforce
-    with \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close> assms(2)  assms(3) have "y' \<le>\<^bsub>R\<^esub> l x'" by (auto dest: symmetricD)
-    with assms(4) \<open>l x' \<le>\<^bsub>R\<^esub> y\<close> show ?case by auto
+    with galL have "l x \<le>\<^bsub>R\<^esub> y" by auto
+    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> monoL perR have "l x' \<le>\<^bsub>R\<^esub> y" by fastforce
+    with \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close> galL perR have "y' \<le>\<^bsub>R\<^esub> l x'" by (auto dest: symmetricD)
+    with perR \<open>l x' \<le>\<^bsub>R\<^esub> y\<close> show ?case by auto
   qed
 qed
 
-lemma bi_related_revimp: assumes "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
-  and "symmetric L"
-  and "transitive L"
+lemma bi_related_revimp: assumes monoR: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+  and perL: "partial_equivalence_rel L"
 shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longleftarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
 proof (intro Dep_Fun_Rel_relI, standard)
   fix x y x' y'
   assume "x \<^bsub>L\<^esub>\<lessapprox> y" and "x' \<^bsub>L\<^esub>\<lessapprox> y'" and "y \<equiv>\<^bsub>R\<^esub> y'"
   then show "x \<equiv>\<^bsub>L\<^esub> x'" proof (intro bi_relatedI, goal_cases)
     case 1
-    with assms(1) assms(3) have "x \<le>\<^bsub>L\<^esub> r y'" by fastforce
+    with monoR perL have "x \<le>\<^bsub>L\<^esub> r y'" by fastforce
     with  \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close>  have "x' \<le>\<^bsub>L\<^esub> r y'" by auto
-    with assms(2) assms(3) \<open>x \<le>\<^bsub>L\<^esub> r y'\<close> show ?case by (auto dest: symmetricD)
+    with perL \<open>x \<le>\<^bsub>L\<^esub> r y'\<close> show ?case by (fastforce dest: symmetricD)
   next
     case 2
-    with assms(1) assms(3) have "x' \<le>\<^bsub>L\<^esub> r y" by fastforce
+    with monoR perL have "x' \<le>\<^bsub>L\<^esub> r y" by fastforce
     with  \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close>  have "x \<le>\<^bsub>L\<^esub> r y" by auto
-    with assms(2) assms(3) \<open>x' \<le>\<^bsub>L\<^esub> r y\<close> show ?case by (auto dest: symmetricD)
+    with perL \<open>x' \<le>\<^bsub>L\<^esub> r y\<close> show ?case by (fastforce dest: symmetricD)
   qed
 qed
 
-corollary bi_related_iff: assumes "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
-  and "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
-  and "symmetric L"
-  and "transitive L"
-  and "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
-  and "symmetric R"
-  and "transitive R"
+corollary bi_related_iff: assumes
+  monoL: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and monoR: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+  and galL: "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
+  and perL: "partial_equivalence_rel L"
+  and perR: "partial_equivalence_rel R"
 shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longleftrightarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
-   proof (intro Dep_Fun_Rel_relI iffI)
-     show "\<And>uu uua uub uuc. uu \<^bsub>L\<^esub>\<lessapprox> uua \<Longrightarrow> uub \<^bsub>L\<^esub>\<lessapprox> uuc \<Longrightarrow> uu \<equiv>\<^bsub>(\<le>\<^bsub>L\<^esub>)\<^esub> uub \<Longrightarrow> uua \<equiv>\<^bsub>(\<le>\<^bsub>R\<^esub>)\<^esub> uuc" using assms bi_related_imp by auto
-     have "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longleftarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)" using assms bi_related_revimp by auto
-     then show "\<And>uu uua uub uuc. uu \<^bsub>L\<^esub>\<lessapprox> uua \<Longrightarrow> uub \<^bsub>L\<^esub>\<lessapprox> uuc \<Longrightarrow> uua \<equiv>\<^bsub>(\<le>\<^bsub>R\<^esub>)\<^esub> uuc \<Longrightarrow> uu \<equiv>\<^bsub>(\<le>\<^bsub>L\<^esub>)\<^esub> uub" by auto
+   proof (intro Dep_Fun_Rel_relI iffI, goal_cases)
+     case (1 uu uua uub uuc)
+      then show ?case using monoL galL perR bi_related_imp by auto
+   next
+     case (2 uu uua uub uuc)
+     then show ?case using monoR perL bi_related_revimp by auto
    qed
 end
 

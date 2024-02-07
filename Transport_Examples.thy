@@ -224,7 +224,7 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
       apply uassm
        apply (urule related_Fun_Rel_combI)
      apply uassm
-     apply (urule Fun_Rel_rev_imp_eq_if_rel_inective)
+     apply (urule Fun_Rel_rev_imp_eq_if_rel_injective)
   apply (urule setListInj)
       apply (urule refl)
      apply (urule Fun_Rel_rev_imp_all_if_left_total)
@@ -258,7 +258,7 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
       apply uassm
        apply (urule related_Fun_Rel_combI)
      apply uassm
-     apply (urule Fun_Rel_rev_imp_eq_if_rel_inective)
+     apply (urule Fun_Rel_rev_imp_eq_if_rel_injective)
   apply (urule mixed_setListInj)
       apply (urule refl)
      apply (urule Fun_Rel_rev_imp_all_if_left_total)
