@@ -232,20 +232,20 @@ end
 context
   fixes L1 R1 l1 r1 L R l r
   assumes per1: "(L1 \<equiv>\<^bsub>PER\<^esub> R1) l1 r1"
-  defines "L \<equiv> (\<lambda> xs ys . rel_set L1 (set xs) (set ys))" and "R \<equiv> rel_set R1"
-  and "l \<equiv> (Fun.comp (image l1)  set)" and "r \<equiv> (Fun.comp (sorted_list_of_set) (image r1))"
+  defines "L \<equiv> rel_set L1" and "R \<equiv> (\<lambda> xs ys . rel_set R1 (set xs) (set ys))"
+  and "l \<equiv> (Fun.comp (sorted_list_of_set) (image l1))" and "r \<equiv> (Fun.comp (image r1)  set)"
 begin
 
 interpretation t: transport L R l r .
 
-lemma injective_alist_bset: "rel_injective (t.left_Galois :: (('a :: linorder) list \<Rightarrow> 'b set \<Rightarrow> bool))" sorry
-lemma left_total_alist_bset: "Binary_Relations_Left_Total.left_total (t.left_Galois :: (('a :: linorder) list \<Rightarrow> 'b set \<Rightarrow> bool))"
+lemma injective_aset_blist: "rel_injective (t.left_Galois :: ('a set \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))" sorry
+lemma left_total_aset_blist: "Binary_Relations_Left_Total.left_total (t.left_Galois :: ('a set \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))"
   sorry
 
 
 declare [[show_types]]
-lemma "\<forall> (xs :: ('a :: linorder) list) . xs = xs"
-apply (rule rev_impD[of _ "\<forall> (xs :: 'b set). ( _ xs xs)"])
+lemma "\<forall> (xs :: 'a set) . xs = xs"
+apply (rule rev_impD[of _ "\<forall> (xs :: ('b :: linorder) list). ( _ xs xs)"])
    apply (urule related_Fun_Rel_combI)
     apply (urule related_Fun_Rel_lambdaI)
      apply (urule related_Fun_Rel_combI)
@@ -256,9 +256,9 @@ apply (rule rev_impD[of _ "\<forall> (xs :: 'b set). ( _ xs xs)"])
      defer
      apply (urule refl)
     apply (urule Fun_Rel_rev_imp_all_if_left_total) (* here we need to have the type specified *)
-    apply (urule left_total_alist_bset)
+    apply (urule left_total_aset_blist)
    defer
-   apply (urule injective_alist_bset)
+   apply (urule injective_aset_blist)
   apply simp
   done
 
