@@ -132,9 +132,9 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"
 
 ML\<open>structure A = Higher_Order_Unification\<close>
 
-lemma aux: "tZN.left_Galois 0 0"
+lemma tZN_00: "tZN.left_Galois 0 0"
   by (simp add: bin_rel_restrict_leftI in_codomI pos_def tZN.left_Galois_iff_in_codom_and_left_rel_right)
-lemma aux2: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)"
+lemma tZN_addadd: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)"
   apply (intro Dep_Fun_Rel_relI)
   by (metis (full_types) bin_rel_restrict_leftE galois_rel.left_GaloisE of_nat_add perZN tZN.galois_connectionE tZN.galois_equivalence_def tZN.partial_equivalence_rel_equivalence_def tZN.right_left_Galois_if_right_relI)
 
@@ -145,10 +145,10 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
     apply (urule related_Fun_Rel_lambdaI)
      apply (urule related_Fun_Rel_combI)
       apply (urule related_Fun_Rel_combI)
-       apply (urule aux)
+       apply (urule tZN_00)
       apply (urule related_Fun_Rel_combI)
        apply uassm
-      apply (urule aux2)
+      apply (urule tZN_addadd)
      apply (urule related_Fun_Rel_combI)
       apply uassm
   apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI)
@@ -158,9 +158,6 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
  apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
    apply (urule tZN_left_total)
   by simp
-
-lemma aux3: "tZN.left_Galois\<restriction>\<^bsub>pos\<^esub> 0 0"
-  using aux by blast
 
 lemma tZN_restrict[simp,uhint]: "tZN.left_Galois\<restriction>\<^bsub>pos\<^esub> = tZN.left_Galois"
   using bin_rel_restrict_leftE by blast
@@ -181,7 +178,7 @@ lemma "\<exists>\<^bsub>pos\<^esub> (x :: int) . x = 0"
    apply (urule related_Fun_Rel_combI)
     apply (urule related_Fun_Rel_lambdaI)
      apply (urule related_Fun_Rel_combI)
-      apply (urule aux3)
+      apply (urule tZN_00)
      apply (urule related_Fun_Rel_combI)
       apply uassm
      apply (urule Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI)
@@ -233,25 +230,22 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
 end
 
 context
-  fixes f :: "('a::linorder) \<Rightarrow> ('b::linorder)"
-  assumes "injective f"
+  fixes L1 R1 l1 r1 L R l r
+  assumes per1: "(L1 \<equiv>\<^bsub>PER\<^esub> R1) l1 r1"
+  defines "L \<equiv> (\<lambda> xs ys . rel_set L1 (set xs) (set ys))" and "R \<equiv> rel_set R1"
+  and "l \<equiv> (Fun.comp (image l1)  set)" and "r \<equiv> (Fun.comp (sorted_list_of_set) (image r1))"
 begin
 
-interpretation tFSetList : transport LFSR LFSL "\<lambda> xset . (map f (sorted_list_of_fset xset))" "\<lambda> xs .fset_of_list (map (inv f) xs)" .
-interpretation t : transport L R l r for L R l r .
-text \<open>Proofs of equivalences.\<close>
+interpretation t: transport L R l r .
+
+lemma injective_alist_bset: "rel_injective (t.left_Galois :: (('a :: linorder) list \<Rightarrow> 'b set \<Rightarrow> bool))" sorry
+lemma left_total_alist_bset: "Binary_Relations_Left_Total.left_total (t.left_Galois :: (('a :: linorder) list \<Rightarrow> 'b set \<Rightarrow> bool))"
+  sorry
 
 
-lemma mixed_list_fset_PER: "(LFSL \<equiv>\<^bsub>PER\<^esub> LFSR)  (\<lambda> xs .fset_of_list (map (inv f) xs)) (\<lambda> xset . map f (sorted_list_of_fset xset))"
-  unfolding LFSL_def sorry
-
-
-lemma mixed_setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'b list \<Rightarrow> bool)" by auto
-lemma mixed_setListLeftTot: "Binary_Relations_Left_Total.left_total (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> ('b :: linorder) list \<Rightarrow> _)"
-  by (metis Binary_Relations_Left_Total.left_totalI galois_rel.in_dom_left_if_left_Galois mixed_list_fset_PER tFSetList.galois_connectionE tFSetList.galois_equivalenceE tFSetList.galois_propE tFSetList.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence tFSetList.left_total_left_Galois_iff_left_total_leftI tFSetList.partial_equivalence_rel_equivalence_def tFSetList.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right)
-
-lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
-  apply (rule rev_impD[of _ "_ (\<lambda> xs . _ xs xs)"])
+declare [[show_types]]
+lemma "\<forall> (xs :: ('a :: linorder) list) . xs = xs"
+apply (rule rev_impD[of _ "\<forall> (xs :: 'b set). ( _ xs xs)"])
    apply (urule related_Fun_Rel_combI)
     apply (urule related_Fun_Rel_lambdaI)
      apply (urule related_Fun_Rel_combI)
@@ -259,15 +253,16 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
        apply (urule related_Fun_Rel_combI)
      apply uassm
      apply (urule Fun_Rel_rev_imp_eq_if_rel_injective)
-  apply (urule mixed_setListInj)
-      apply (urule refl)
-     apply (urule Fun_Rel_rev_imp_all_if_left_total)
-   apply (urule mixed_setListLeftTot)
-  by simp
-end
+     defer
+     apply (urule refl)
+    apply (urule Fun_Rel_rev_imp_all_if_left_total) (* here we need to have the type specified *)
+    apply (urule left_total_alist_bset)
+   defer
+   apply (urule injective_alist_bset)
+  apply simp
+  done
 
 end
-
 
 
 
@@ -304,4 +299,4 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"
 
 end
 
-end
+
