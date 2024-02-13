@@ -232,6 +232,7 @@ end
 context
   fixes L1 R1 l1 r1 L R l r
   assumes per1: "(L1 \<equiv>\<^bsub>PER\<^esub> R1) l1 r1"
+  and invR: "\<forall> y . r (l y) = y"
   defines "L \<equiv> ((=)::'a fset \<Rightarrow> _ \<Rightarrow> _)" and "R \<equiv> (\<lambda> xs ys . ((=) :: ('b :: linorder) fset \<Rightarrow> _ \<Rightarrow> _) (fset_of_list xs) (fset_of_list ys))"
   and "l \<equiv> (Fun.comp (sorted_list_of_fset) (fimage (l1 :: 'a \<Rightarrow> ('b :: linorder))))" and "r \<equiv> (Fun.comp (fimage (r1 :: 'b \<Rightarrow> 'a))  fset_of_list)"
 begin
@@ -239,16 +240,16 @@ begin
 interpretation t: transport L R l r .
 
 lemma injective_afset_blist: "rel_injective (t.left_Galois :: ('a fset \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))"
-  using L_def t.injective_left_Galois_if_rel_injective_left by blast
-declare [[show_types]]
+  by (simp add: L_def galois.injective_left_Galois_if_rel_injective_left rel_injectiveI)
+
 lemma left_total_afset_blist: "Binary_Relations_Left_Total.left_total (t.left_Galois :: ('a fset \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))"
   apply (intro Binary_Relations_Left_Total.left_totalI in_domI t.left_GaloisI in_codomI) unfolding R_def L_def l_def r_def  apply auto defer 
 proof 
   fix x :: "'a fset" and xb :: 'b
   show "xb |\<in>| fset_of_list (l x) \<Longrightarrow> r1 xb |\<in>| (Fun.comp r l) x" using r_def by auto
-  show "xb |\<in>| fset_of_list (l ((\<lambda> x . x) x)) \<Longrightarrow> (Fun.comp r l) ((\<lambda> x . x) x) |\<subseteq>| x" sorry
+  show "xb |\<in>| fset_of_list (l ((\<lambda> x . x) x)) \<Longrightarrow> (Fun.comp r l) ((\<lambda> x . x) x) |\<subseteq>| x" by (simp add: invR)
   fix xa :: 'a
-  show "xa |\<in>| x \<Longrightarrow> xa \<in> r1 ` fset (fset_of_list (l x))" sorry
+  show "xa |\<in>| x \<Longrightarrow> xa \<in> r1 ` fset (fset_of_list (l x))" using invR r_def by auto
 qed
 
 declare [[show_types]]
