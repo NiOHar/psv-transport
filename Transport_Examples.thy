@@ -232,19 +232,27 @@ end
 context
   fixes L1 R1 l1 r1 L R l r
   assumes per1: "(L1 \<equiv>\<^bsub>PER\<^esub> R1) l1 r1"
-  defines "L \<equiv> rel_set L1" and "R \<equiv> (\<lambda> xs ys . rel_set R1 (set xs) (set ys))"
-  and "l \<equiv> (Fun.comp (sorted_list_of_set) (image l1))" and "r \<equiv> (Fun.comp (image r1)  set)"
+  defines "L \<equiv> ((=)::'a fset \<Rightarrow> _ \<Rightarrow> _)" and "R \<equiv> (\<lambda> xs ys . ((=) :: ('b :: linorder) fset \<Rightarrow> _ \<Rightarrow> _) (fset_of_list xs) (fset_of_list ys))"
+  and "l \<equiv> (Fun.comp (sorted_list_of_fset) (fimage (l1 :: 'a \<Rightarrow> ('b :: linorder))))" and "r \<equiv> (Fun.comp (fimage (r1 :: 'b \<Rightarrow> 'a))  fset_of_list)"
 begin
 
 interpretation t: transport L R l r .
 
-lemma injective_aset_blist: "rel_injective (t.left_Galois :: ('a set \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))" sorry
-lemma left_total_aset_blist: "Binary_Relations_Left_Total.left_total (t.left_Galois :: ('a set \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))"
-  sorry
-
+lemma injective_afset_blist: "rel_injective (t.left_Galois :: ('a fset \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))"
+  using L_def t.injective_left_Galois_if_rel_injective_left by blast
+declare [[show_types]]
+lemma left_total_afset_blist: "Binary_Relations_Left_Total.left_total (t.left_Galois :: ('a fset \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))"
+  apply (intro Binary_Relations_Left_Total.left_totalI in_domI t.left_GaloisI in_codomI) unfolding R_def L_def l_def r_def  apply auto defer 
+proof 
+  fix x :: "'a fset" and xb :: 'b
+  show "xb |\<in>| fset_of_list (l x) \<Longrightarrow> r1 xb |\<in>| (Fun.comp r l) x" using r_def by auto
+  show "xb |\<in>| fset_of_list (l ((\<lambda> x . x) x)) \<Longrightarrow> (Fun.comp r l) ((\<lambda> x . x) x) |\<subseteq>| x" sorry
+  fix xa :: 'a
+  show "xa |\<in>| x \<Longrightarrow> xa \<in> r1 ` fset (fset_of_list (l x))" sorry
+qed
 
 declare [[show_types]]
-lemma "\<forall> (xs :: 'a set) . xs = xs"
+lemma "\<forall> (xs :: 'a fset) . xs = xs"
 apply (rule rev_impD[of _ "\<forall> (xs :: ('b :: linorder) list). ( _ xs xs)"])
    apply (urule related_Fun_Rel_combI)
     apply (urule related_Fun_Rel_lambdaI)
@@ -256,9 +264,9 @@ apply (rule rev_impD[of _ "\<forall> (xs :: ('b :: linorder) list). ( _ xs xs)"]
      defer
      apply (urule refl)
     apply (urule Fun_Rel_rev_imp_all_if_left_total) (* here we need to have the type specified *)
-    apply (urule left_total_aset_blist)
+    apply (urule left_total_afset_blist)
    defer
-   apply (urule injective_aset_blist)
+   apply (urule injective_afset_blist)
   apply simp
   done
 
