@@ -1059,6 +1059,57 @@ end
 context galois
 begin
 
+lemma Fun_Rel_imp_bi_relatedI:
+  assumes monol: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and half_gal: "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
+  and perR: "partial_equivalence_rel (\<le>\<^bsub>R\<^esub>)"
+  shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longrightarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
+proof (intro Dep_Fun_Rel_relI impI)
+  fix x y x' y'
+  assume lassms: "x \<^bsub>L\<^esub>\<lessapprox> y" "x' \<^bsub>L\<^esub>\<lessapprox> y'" "x \<equiv>\<^bsub>L\<^esub> x'"
+  show "y \<equiv>\<^bsub>R\<^esub> y'"
+  proof (intro bi_relatedI)
+    from lassms half_gal have "l x' \<le>\<^bsub>R\<^esub> y'" by auto
+    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> monol perR have "l x \<le>\<^bsub>R\<^esub> y'" by blast
+    with \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close> half_gal perR have "y \<le>\<^bsub>R\<^esub> l x" by (blast dest: symmetricD)
+    with perR \<open>l x \<le>\<^bsub>R\<^esub> y'\<close> show "y \<le>\<^bsub>R\<^esub> y'" by blast
+    from lassms half_gal have "l x \<le>\<^bsub>R\<^esub> y" by blast
+    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> monol perR have "l x' \<le>\<^bsub>R\<^esub> y" by blast
+    with \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close> half_gal perR have "y' \<le>\<^bsub>R\<^esub> l x'" by (blast dest: symmetricD)
+    with perR \<open>l x' \<le>\<^bsub>R\<^esub> y\<close> show "y' \<le>\<^bsub>R\<^esub> y" by auto
+  qed
+qed
+
+lemma Fun_Rel_rev_imp_bi_relatedI:
+  assumes monor: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+  and perL: "partial_equivalence_rel (\<le>\<^bsub>L\<^esub>)"
+  shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longleftarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
+proof (intro Dep_Fun_Rel_relI rev_impI)
+  fix x y x' y'
+  assume "x \<^bsub>L\<^esub>\<lessapprox> y" and "x' \<^bsub>L\<^esub>\<lessapprox> y'" and "y \<equiv>\<^bsub>R\<^esub> y'"
+  then show "x \<equiv>\<^bsub>L\<^esub> x'" proof (intro bi_relatedI, goal_cases)
+    case 1
+    with monor perL have "x \<le>\<^bsub>L\<^esub> r y'" by fastforce
+    with  \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close>  have "x' \<le>\<^bsub>L\<^esub> r y'" by auto
+    with perL \<open>x \<le>\<^bsub>L\<^esub> r y'\<close> show ?case by (blast dest: symmetricD)
+  next
+    case 2
+    with monor perL have "x' \<le>\<^bsub>L\<^esub> r y" by blast
+    with  \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close>  have "x \<le>\<^bsub>L\<^esub> r y" by auto
+    with perL \<open>x' \<le>\<^bsub>L\<^esub> r y\<close> show ?case by (blast dest: symmetricD)
+  qed
+qed
+
+corollary Fun_Rel_iff_bi_relatedI:
+  assumes "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
+  and "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
+  and "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
+  and "partial_equivalence_rel (\<le>\<^bsub>L\<^esub>)"
+  and "partial_equivalence_rel (\<le>\<^bsub>R\<^esub>)"
+  shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longleftrightarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
+  using assms Fun_Rel_imp_bi_relatedI Fun_Rel_rev_imp_bi_relatedI by (auto 8 0)
+
+(*TODO: we should derive specialised theorems for the Galois relator that are in simplified form.*)
 (*TODO: for the Galois relator, many assumptions needed for the parametricity theorems of the
 logical connectives become vacous. Example:*)
 
@@ -1068,65 +1119,6 @@ print_statement Fun_Rel_imp_eq_restrict_if_right_unique_onI
 lemma "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longrightarrow>)) (in_field (\<le>\<^bsub>L\<^esub>)) (in_field (\<le>\<^bsub>R\<^esub>))"
   by (intro Dep_Fun_Rel_relI) auto
 
-(*TODO: we should derive specialised theorems for the Galois relator that are in simplified form.*)
-
-lemma bi_related_imp: assumes monoL: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
-  and galL: "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
-  and perR: "partial_equivalence_rel R"
-shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longrightarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
-proof (intro Dep_Fun_Rel_relI, standard)
-  fix x y x' y'
-  assume "x \<^bsub>L\<^esub>\<lessapprox> y" and "x' \<^bsub>L\<^esub>\<lessapprox> y'" and "x \<equiv>\<^bsub>L\<^esub> x'"
-  then show "y \<equiv>\<^bsub>R\<^esub> y'" proof (intro bi_relatedI, goal_cases)
-    case 1
-    with galL have "l x' \<le>\<^bsub>R\<^esub> y'" by auto
-    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> monoL perR have "l x \<le>\<^bsub>R\<^esub> y'" by fastforce
-    with \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close> galL perR have "y \<le>\<^bsub>R\<^esub> l x" by (auto dest: symmetricD)
-    with perR \<open>l x \<le>\<^bsub>R\<^esub> y'\<close> show ?case by auto
-  next
-    case 2
-    with galL have "l x \<le>\<^bsub>R\<^esub> y" by auto
-    with \<open>x \<equiv>\<^bsub>L\<^esub> x'\<close> monoL perR have "l x' \<le>\<^bsub>R\<^esub> y" by fastforce
-    with \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close> galL perR have "y' \<le>\<^bsub>R\<^esub> l x'" by (auto dest: symmetricD)
-    with perR \<open>l x' \<le>\<^bsub>R\<^esub> y\<close> show ?case by auto
-  qed
-qed
-
-lemma bi_related_revimp: assumes monoR: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
-  and perL: "partial_equivalence_rel L"
-shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longleftarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
-proof (intro Dep_Fun_Rel_relI, standard)
-  fix x y x' y'
-  assume "x \<^bsub>L\<^esub>\<lessapprox> y" and "x' \<^bsub>L\<^esub>\<lessapprox> y'" and "y \<equiv>\<^bsub>R\<^esub> y'"
-  then show "x \<equiv>\<^bsub>L\<^esub> x'" proof (intro bi_relatedI, goal_cases)
-    case 1
-    with monoR perL have "x \<le>\<^bsub>L\<^esub> r y'" by fastforce
-    with  \<open>x' \<^bsub>L\<^esub>\<lessapprox> y'\<close>  have "x' \<le>\<^bsub>L\<^esub> r y'" by auto
-    with perL \<open>x \<le>\<^bsub>L\<^esub> r y'\<close> show ?case by (fastforce dest: symmetricD)
-  next
-    case 2
-    with monoR perL have "x' \<le>\<^bsub>L\<^esub> r y" by fastforce
-    with  \<open>x \<^bsub>L\<^esub>\<lessapprox> y\<close>  have "x \<le>\<^bsub>L\<^esub> r y" by auto
-    with perL \<open>x' \<le>\<^bsub>L\<^esub> r y\<close> show ?case by (fastforce dest: symmetricD)
-  qed
-qed
-
-corollary bi_related_iff: assumes
-  monoL: "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l"
-  and monoR: "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r"
-  and galL: "((\<le>\<^bsub>L\<^esub>) \<^sub>h\<unlhd> (\<le>\<^bsub>R\<^esub>)) l r"
-  and perL: "partial_equivalence_rel L"
-  and perR: "partial_equivalence_rel R"
-shows "((\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<^bsub>L\<^esub>\<lessapprox>) \<Rrightarrow> (\<longleftrightarrow>)) (\<equiv>\<^bsub>L\<^esub>)  (\<equiv>\<^bsub>R\<^esub>)"
-   proof (intro Dep_Fun_Rel_relI iffI, goal_cases)
-     case (1 uu uua uub uuc)
-      then show ?case using monoL galL perR bi_related_imp by auto
-   next
-     case (2 uu uua uub uuc)
-     then show ?case using monoR perL bi_related_revimp by auto
-   qed
 end
-
-
 
 end

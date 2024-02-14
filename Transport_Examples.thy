@@ -50,7 +50,8 @@ definition "pos (i :: int) \<equiv> 0 \<le> i"
 
 interpretation tZN : transport "(=\<^bsub>pos\<^esub>)" "(=)" nat int .
 
-context begin
+context
+begin
 interpretation t : transport L R l r for L R l r .
 
 lemma perZN: "((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) nat int"
@@ -196,7 +197,9 @@ abbreviation (input) "(LFSR :: 'a fset \<Rightarrow> _) \<equiv> (=)"
 definition "LSL xs xs' \<equiv> set xs = set xs'"
 abbreviation (input) "(LSR :: 'a set \<Rightarrow> _) \<equiv> (=\<^bsub>finite :: 'a set \<Rightarrow> bool\<^esub>)"
 
-context begin
+context
+begin
+
 interpretation tFSetList : transport LFSR LFSL sorted_list_of_fset fset_of_list .
 interpretation t : transport L R l r for L R l r .
 text \<open>Proofs of equivalences.\<close>
@@ -210,8 +213,6 @@ lemma list_set_PER: "(LSL \<equiv>\<^bsub>PER\<^esub> LSR) set sorted_list_of_se
 lemma setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'a list \<Rightarrow> bool)" by auto
 lemma setListLeftTot: "Binary_Relations_Left_Total.left_total (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> _ \<Rightarrow> _)"
   by (meson Binary_Relations_Left_Total.left_totalI galois_prop.galois_propE galois_rel.in_dom_left_if_left_Galois list_fset_PER tFSetList.galois_connection_def tFSetList.galois_equivalence_def tFSetList.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence tFSetList.left_total_left_Galois_iff_left_total_leftI tFSetList.partial_equivalence_rel_equivalence_def tFSetList.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right)
-
-
 
 lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
   apply (rule rev_impD[of _ "_ (\<lambda> xs . _ xs xs)"])
@@ -227,53 +228,45 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
      apply (urule Fun_Rel_rev_imp_all_if_left_total)
    apply (urule setListLeftTot)
   by simp
+
 end
 
 context
-  fixes L1 R1 l1 r1 L R l r
+  fixes L1 :: "'a \<Rightarrow> 'a \<Rightarrow> bool" and R1 :: "'b :: linorder \<Rightarrow> 'b \<Rightarrow> bool"
+  and l1 :: "'a \<Rightarrow> 'b" and r1 :: "'b \<Rightarrow> 'a"
+  and L :: "'a fset \<Rightarrow> 'a fset \<Rightarrow> bool" and R :: "'b list \<Rightarrow> 'b list \<Rightarrow> bool"
+  and l :: "'a fset \<Rightarrow> 'b list" and r :: "'b list \<Rightarrow> 'a fset"
   assumes per1: "(L1 \<equiv>\<^bsub>PER\<^esub> R1) l1 r1"
-  and invR: "\<forall> y . r (l y) = y"
-  defines "L \<equiv> ((=)::'a fset \<Rightarrow> _ \<Rightarrow> _)" and "R \<equiv> (\<lambda> xs ys . ((=) :: ('b :: linorder) fset \<Rightarrow> _ \<Rightarrow> _) (fset_of_list xs) (fset_of_list ys))"
-  and "l \<equiv> (Fun.comp (sorted_list_of_fset) (fimage (l1 :: 'a \<Rightarrow> ('b :: linorder))))" and "r \<equiv> (Fun.comp (fimage (r1 :: 'b \<Rightarrow> 'a))  fset_of_list)"
+  defines "L \<equiv> rel_fset L1" and "R \<equiv> rel_map set (rel_set R1)"
+  and "l \<equiv> Functions_Base.comp (sorted_list_of_fset) (fimage l1)"
+  and "r \<equiv> Functions_Base.comp (fimage r1) fset_of_list"
 begin
 
 interpretation t: transport L R l r .
 
-lemma injective_afset_blist: "rel_injective (t.left_Galois :: ('a fset \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))"
-  by (simp add: L_def galois.injective_left_Galois_if_rel_injective_left rel_injectiveI)
+(*TODO*)
+lemma "(L \<equiv>\<^bsub>PER\<^esub> R) l r"
+  sorry
 
-lemma left_total_afset_blist: "Binary_Relations_Left_Total.left_total (t.left_Galois :: ('a fset \<Rightarrow> ('b :: linorder) list \<Rightarrow> bool))"
-  apply (intro Binary_Relations_Left_Total.left_totalI in_domI t.left_GaloisI in_codomI) unfolding R_def L_def l_def r_def  apply auto defer 
-proof 
-  fix x :: "'a fset" and xb :: 'b
-  show "xb |\<in>| fset_of_list (l x) \<Longrightarrow> r1 xb |\<in>| (Fun.comp r l) x" using r_def by auto
-  show "xb |\<in>| fset_of_list (l ((\<lambda> x . x) x)) \<Longrightarrow> (Fun.comp r l) ((\<lambda> x . x) x) |\<subseteq>| x" by (simp add: invR)
-  fix xa :: 'a
-  show "xa |\<in>| x \<Longrightarrow> xa \<in> r1 ` fset (fset_of_list (l x))" using invR r_def by auto
-qed
-
-declare [[show_types]]
-lemma "\<forall> (xs :: 'a fset) . xs = xs"
-apply (rule rev_impD[of _ "\<forall> (xs :: ('b :: linorder) list). ( _ xs xs)"])
+(* declare [[show_types]] *)
+lemma "\<forall>\<^bsub>in_field L\<^esub> (xs :: 'a fset). xs \<equiv>\<^bsub>L\<^esub> xs"
+  apply (rule rev_impD[of _ "\<forall>(xs :: ('b :: linorder) list). ( _ xs xs)"])
    apply (urule related_Fun_Rel_combI)
     apply (urule related_Fun_Rel_lambdaI)
      apply (urule related_Fun_Rel_combI)
       apply uassm
        apply (urule related_Fun_Rel_combI)
      apply uassm
-     apply (urule Fun_Rel_rev_imp_eq_if_rel_injective)
+     apply (urule t.Fun_Rel_rev_imp_bi_relatedI)
+     defer
      defer
      apply (urule refl)
-    apply (urule Fun_Rel_rev_imp_all_if_left_total) (* here we need to have the type specified *)
-    apply (urule left_total_afset_blist)
+    apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right]) (* here we need to have the type specified *)
+    defer
    defer
-   apply (urule injective_afset_blist)
-  apply simp
-  done
+  oops
 
 end
-
-
 
 named_theorems trp_register
 declare Fun_Rel_rev_imp_eq_restrict_if_rel_injective_atI[trp_register]
