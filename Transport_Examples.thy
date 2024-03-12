@@ -237,16 +237,61 @@ context
   and L :: "'a fset \<Rightarrow> 'a fset \<Rightarrow> bool" and R :: "'b list \<Rightarrow> 'b list \<Rightarrow> bool"
   and l :: "'a fset \<Rightarrow> 'b list" and r :: "'b list \<Rightarrow> 'a fset"
   assumes per1: "(L1 \<equiv>\<^bsub>PER\<^esub> R1) l1 r1"
-  defines "L \<equiv> rel_fset L1" and "R \<equiv> rel_map set (rel_set R1)"
+  defines "L \<equiv> rel_fset L1" and "R \<equiv> rel_map fset_of_list (rel_ffset R1)"
   and "l \<equiv> Functions_Base.comp (sorted_list_of_fset) (fimage l1)"
   and "r \<equiv> Functions_Base.comp (fimage r1) fset_of_list"
 begin
 
 interpretation t: transport L R l r .
+                                     
+lemma "symmetric A \<Longrightarrow> symmetric (rel_fset A)"
+  by (simp add: rel_fset_alt_def rel_iff_rel_if_symmetric symmetricI)
 
 (*TODO*)
-lemma "(L \<equiv>\<^bsub>PER\<^esub> R) l r"
-  sorry
+lemma  "(L \<equiv>\<^bsub>PER\<^esub> R) l r"
+proof 
+  show "t.galois_equivalence" proof
+    show "t.galois_connection" proof
+      show " ((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l" 
+          using R_def by fastforce
+    next
+      show "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r" proof
+        fix x y
+        assume "R x y"
+        show "L (r x) (r y)"
+          using R_def \<open>x \<le>\<^bsub>R\<^esub> y\<close> by fastforce
+      qed
+    next
+      show "t.galois_prop l r" proof
+        show "t.half_galois_prop_left" 
+          using R_def by fastforce
+        show "t.half_galois_prop_right" 
+          using R_def by force
+      qed
+    qed
+  next
+    show "((\<le>\<^bsub>R\<^esub>) \<unlhd> (\<le>\<^bsub>L\<^esub>)) r l " sorry
+  qed
+next
+  show "partial_equivalence_rel L" proof
+    show "transitive L" proof 
+      fix x y z
+      assume "L x y" and "L y z"
+      show "L x z" sorry
+    qed
+  next
+    show "symmetric L" using per1
+    qed
+  qed
+next
+  show "partial_equivalence_rel R" proof
+    show "transitive R"
+      using R_def by fastforce
+  next
+    show "symmetric R"
+      using R_def by fastforce
+  qed
+qed
 
 (* declare [[show_types]] *)
 lemma "\<forall>\<^bsub>in_field L\<^esub> (xs :: 'a fset). xs \<equiv>\<^bsub>L\<^esub> xs"
@@ -263,7 +308,7 @@ lemma "\<forall>\<^bsub>in_field L\<^esub> (xs :: 'a fset). xs \<equiv>\<^bsub>L
      apply (urule refl)
     apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right]) (* here we need to have the type specified *)
     defer
-   defer
+     defer
   oops
 
 end
