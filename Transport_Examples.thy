@@ -280,8 +280,7 @@ next
       show "L x z" sorry
     qed
   next
-    show "symmetric L" using per1
-    qed
+    show "symmetric L" sorry
   qed
 next
   show "partial_equivalence_rel R" proof
