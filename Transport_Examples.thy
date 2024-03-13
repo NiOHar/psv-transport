@@ -251,7 +251,7 @@ lemma transitive_imp_transitive_rel_fset: "transitive A \<Longrightarrow> transi
   by (smt (verit, del_insts) transitiveI rel_fset_alt_def transitiveD)
 
 lemma symmetric_imp_symmetric_rel_map: "symmetric A \<Longrightarrow> symmetric (rel_map fset_of_list (rel_fset A))"
-  by (metis rel_map_eq symmetricD symmetricI symmetric_imp_symmetric_rel_fset)
+  by (auto simp: symmetricD symmetric_imp_symmetric_rel_fset)
 
 
 
@@ -272,35 +272,6 @@ lemma defl_R1: "deflationary_on (in_field R1) R1 (order_functors.counit l1 r1)" 
  apply (elim transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_order_equivalenceE  order_functors.order_equivalenceE rel_equivalence_onE) .
 
 
-lemma infl_rel_fset: "deflationary_on (in_field R) R (order_functors.counit l r)"
-proof (intro deflationary_onI) 
-  fix x
-  assume  "in_field R x"
-  from \<open>in_field R x\<close> have "\<forall> a . List.member x a \<longrightarrow>  in_field R1 a" using R_def
-    by (metis fset_of_list.rep_eq in_fieldE in_fieldI(1) in_fieldI(2) in_set_member rel_fset_alt rel_map_eq)
-  with infl_R1 have "\<forall> a . List.member x a \<longrightarrow> R1 (l1 (r1 a)) a"
-    by (metis defl_R1 deflationary_onD order_functors.counit_eq)
-  have "\<forall>a . (List.member (l (r x)) a \<longleftrightarrow> (\<exists> b . (List.member x b \<and> (l1 (r1 b) = a))))" using r_def l_def fset_of_list.rep_eq
-    by (smt (verit, best) comp_eq fimage_iff in_set_member sorted_list_of_fset_simps(1))
-  then show "in_field (\<le>\<^bsub>R\<^esub>) x \<Longrightarrow> t.counit x \<le>\<^bsub>R\<^esub> x" using order_functors.counit_eq[of l r] R_def \<open>\<forall> a . List.member x a \<longrightarrow> R1 (l1 (r1 a)) a\<close>
-    rel_fset_alt fset_of_list.rep_eq apply auto 
-    by (smt (verit, ccfv_threshold) fset_of_list.rep_eq in_set_member rel_fset_alt)
-qed
-
-lemma defl_rel_fset: "deflationary_on (in_field L) L (order_functors.unit l r)"
-proof (intro deflationary_onI) 
-  fix x
-  assume  "in_field L x"
-  from \<open>in_field L x\<close> have "\<forall> a . a |\<in>| x \<longrightarrow>  in_field L1 a" using L_def
-    by (metis in_fieldE in_fieldI(1) in_fieldI(2) rel_fset_alt)
-  with defl_L1 have "\<forall> a . a |\<in>| x \<longrightarrow> L1 (r1 (l1 a)) a"
-    by (metis deflationary_onD order_functors.unit_eq)
-  have "\<forall>a . (a |\<in>| r (l x) \<longleftrightarrow> (\<exists> b . (b |\<in>| x \<and> (r1 (l1 b) = a))))" using r_def l_def by auto
-  then show "in_field (\<le>\<^bsub>L\<^esub>) x \<Longrightarrow> t.unit x \<le>\<^bsub>L\<^esub> x" using order_functors.unit_eq[of l r] L_def \<open>\<forall> a . a |\<in>| x \<longrightarrow> L1 (r1 (l1 a)) a\<close>
-    using rel_fset_alt by force
-qed
-
-
 lemma per: "(L \<equiv>\<^bsub>PER\<^esub> R) l r"
 proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI)
   show "t.order_equivalence" proof
@@ -309,26 +280,21 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
       show "((\<le>\<^bsub>L\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>R\<^esub>)) l" proof
         fix x y
         assume "L x y"
-        show "R (l x) (l y)" unfolding l_def R_def using \<open>(L1 \<Rrightarrow>\<^sub>m R1) l1\<close> apply (auto simp: rel_fset_alt_def)
-           apply (metis L_def \<open>x \<le>\<^bsub>L\<^esub> y\<close> dep_mono_wrt_relD rel_fset_alt) 
-          by (metis (full_types) L_def \<open>x \<le>\<^bsub>L\<^esub> y\<close> dep_mono_wrt_relD rel_fset_alt)
+        then show "R (l x) (l y)" unfolding l_def R_def L_def using \<open>(L1 \<Rrightarrow>\<^sub>m R1) l1\<close> by (fastforce simp: dep_mono_wrt_relD rel_fset_alt_def) +
       qed
       have "(R1 \<Rrightarrow>\<^sub>m L1) r1" using per1
         by (metis order_functors.order_equivalenceE transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_order_equivalenceE)
       show "((\<le>\<^bsub>R\<^esub>) \<Rrightarrow>\<^sub>m (\<le>\<^bsub>L\<^esub>)) r" proof
         fix x y
         assume "R x y"
-        show "L (r x) (r y)" unfolding r_def L_def using \<open>(R1 \<Rrightarrow>\<^sub>m L1) r1\<close> apply (auto simp: rel_fset_alt_def)
-          apply (metis (mono_tags, lifting) R_def \<open>x \<le>\<^bsub>R\<^esub> y\<close> dep_mono_wrt_relE rel_fset_alt rel_map_eq)
-          using \<open>(R1 \<Rrightarrow>\<^sub>m L1) r1\<close>
-          by (metis (mono_tags, lifting) R_def \<open>x \<le>\<^bsub>R\<^esub> y\<close> dep_mono_wrt_relD rel_fset_alt rel_map_eq)
+        then show "L (r x) (r y)"  unfolding r_def R_def L_def using \<open>(R1 \<Rrightarrow>\<^sub>m L1) r1\<close> by (fastforce simp: dep_mono_wrt_relD rel_fset_alt_def) +
       qed
       show "rel_equivalence_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<le>\<^bsub>L\<^esub>) t.unit" proof (intro rel_equivalence_onI)
         show "inflationary_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<le>\<^bsub>L\<^esub>) t.unit" proof (intro inflationary_onI) 
           fix x
           assume  "in_field L x"
           from \<open>in_field L x\<close> have "\<forall> a . a |\<in>| x \<longrightarrow>  in_field L1 a" using L_def
-            by (metis in_fieldE in_fieldI(1) in_fieldI(2) rel_fset_alt)
+            by (fastforce simp: in_fieldE in_fieldI(1) in_fieldI(2) rel_fset_alt)
           with infl_L1 have "\<forall> a . a |\<in>| x \<longrightarrow> L1 a (r1 (l1 a))"
             by (simp add: inflationary_on_pred_def order_functors.unit_eq)
           have "\<forall>a . (a |\<in>| r (l x) \<longleftrightarrow> (\<exists> b . (b |\<in>| x \<and> (r1 (l1 b) = a))))" using r_def l_def by auto
@@ -339,7 +305,7 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
         fix x
         assume  "in_field L x"
         from \<open>in_field L x\<close> have "\<forall> a . a |\<in>| x \<longrightarrow>  in_field L1 a" using L_def
-          by (metis in_fieldE in_fieldI(1) in_fieldI(2) rel_fset_alt)
+          by (fastforce simp: in_fieldE in_fieldI(1) in_fieldI(2) rel_fset_alt)
         with defl_L1 have "\<forall> a . a |\<in>| x \<longrightarrow> L1 (r1 (l1 a)) a"
           by (metis deflationary_onD order_functors.unit_eq)
         have "\<forall>a . (a |\<in>| r (l x) \<longleftrightarrow> (\<exists> b . (b |\<in>| x \<and> (r1 (l1 b) = a))))" using r_def l_def by auto
@@ -352,27 +318,27 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
         fix x
         assume  "in_field R x"
         from \<open>in_field R x\<close> have "\<forall> a . List.member x a \<longrightarrow>  in_field R1 a" using R_def
-          by (metis fset_of_list.rep_eq in_fieldE in_fieldI(1) in_fieldI(2) in_set_member rel_fset_alt rel_map_eq)
+          by (fastforce simp: fset_of_list.rep_eq in_fieldE in_fieldI(1) in_fieldI(2) in_set_member rel_fset_alt)
         with infl_R1 have "\<forall> a . List.member x a \<longrightarrow> R1 a (l1 (r1 a))"
           by (simp add: inflationary_on_pred_def order_functors.counit_eq)
         have "\<forall>a . (List.member (l (r x)) a \<longleftrightarrow> (\<exists> b . (List.member x b \<and> (l1 (r1 b) = a))))" using r_def l_def fset_of_list.rep_eq
           by (smt (verit, best) comp_eq fimage_iff in_set_member sorted_list_of_fset_simps(1))
         then show "in_field (\<le>\<^bsub>R\<^esub>) x \<Longrightarrow> x \<le>\<^bsub>R\<^esub> t.counit x" using order_functors.counit_eq[of l r] R_def \<open>\<forall> a . List.member x a \<longrightarrow> R1 a (l1 (r1 a))\<close>
-            rel_fset_alt fset_of_list.rep_eq apply auto 
-          by (smt (verit, ccfv_threshold) fset_of_list.rep_eq in_set_member rel_fset_alt)
+            rel_fset_alt fset_of_list.rep_eq
+          by (fastforce simp: fset_of_list.rep_eq in_set_member rel_fset_alt)
       qed
       show "deflationary_on (in_field (\<le>\<^bsub>R\<^esub>)) (\<le>\<^bsub>R\<^esub>) t.counit" proof (intro deflationary_onI) 
         fix x
         assume  "in_field R x"
         from \<open>in_field R x\<close> have "\<forall> a . List.member x a \<longrightarrow>  in_field R1 a" using R_def
-          by (metis fset_of_list.rep_eq in_fieldE in_fieldI(1) in_fieldI(2) in_set_member rel_fset_alt rel_map_eq)
-        with infl_R1 have "\<forall> a . List.member x a \<longrightarrow> R1 (l1 (r1 a)) a"
-          by (metis defl_R1 deflationary_onD order_functors.counit_eq)
+          by (fastforce simp: fset_of_list.rep_eq in_fieldE in_fieldI(1) in_fieldI(2) in_set_member rel_fset_alt)
+        with defl_R1 have "\<forall> a . List.member x a \<longrightarrow> R1 (l1 (r1 a)) a"
+          by (metis deflationary_onD order_functors.counit_eq)
         have "\<forall>a . (List.member (l (r x)) a \<longleftrightarrow> (\<exists> b . (List.member x b \<and> (l1 (r1 b) = a))))" using r_def l_def fset_of_list.rep_eq
           by (smt (verit, best) comp_eq fimage_iff in_set_member sorted_list_of_fset_simps(1))
         then show "in_field (\<le>\<^bsub>R\<^esub>) x \<Longrightarrow> t.counit x \<le>\<^bsub>R\<^esub> x" using order_functors.counit_eq[of l r] R_def \<open>\<forall> a . List.member x a \<longrightarrow> R1 (l1 (r1 a)) a\<close>
-             rel_fset_alt fset_of_list.rep_eq apply auto 
-          by (smt (verit, ccfv_threshold) fset_of_list.rep_eq in_set_member rel_fset_alt)
+             rel_fset_alt fset_of_list.rep_eq
+          by (fastforce simp: fset_of_list.rep_eq in_set_member rel_fset_alt)
       qed
     qed
   qed
@@ -380,7 +346,7 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
       have "transitive L1" using per1 apply (elim transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_galois_equivalenceE) by blast
       then show "transitive L"  using L_def transitive_imp_transitive_rel_fset by auto
       show "symmetric L" using L_def symmetric_imp_symmetric_rel_fset per1 
-      by (metis transport.partial_equivalence_rel_equivalenceE)
+      by (auto elim: transport.partial_equivalence_rel_equivalenceE)
   qed
 next
   show "partial_equivalence_rel R" proof
