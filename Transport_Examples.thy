@@ -110,7 +110,7 @@ declare [[uhint where concl_unifier =
 text \<open>Examples\<close>
 
 ML_val\<open>
-  Transport.mk_term_skeleton 0 @{term "\<forall> (xs :: 'a list) . LFSL xs xs"}
+  Transport.mk_term_skeleton 0 @{term "\<forall>\<^bsub>in_field L\<^esub> (xs :: 'a fset) . \<forall>\<^bsub>in_field L\<^esub> xs' . L xs' xs"}
   |> Syntax.pretty_term @{context}
 \<close>
 
@@ -193,9 +193,9 @@ lemma "\<exists>\<^bsub>pos\<^esub> (x :: int) . x = 0"
 
 (* from https://www.isa-afp.org/sessions/transport/#Transport_Lists_Sets_Examples.html *)
 definition "LFSL xs xs' \<equiv> fset_of_list xs = fset_of_list xs'"
-abbreviation (input) "(LFSR :: 'a fset \<Rightarrow> _) \<equiv> (=)"
+definition "(LFSR :: 'a fset \<Rightarrow> _) \<equiv> (=)"
 definition "LSL xs xs' \<equiv> set xs = set xs'"
-abbreviation (input) "(LSR :: 'a set \<Rightarrow> _) \<equiv> (=\<^bsub>finite :: 'a set \<Rightarrow> bool\<^esub>)"
+definition "(LSR :: 'a set \<Rightarrow> _) \<equiv> (=\<^bsub>finite :: 'a set \<Rightarrow> bool\<^esub>)"
 
 context
 begin
@@ -205,14 +205,15 @@ interpretation t : transport L R l r for L R l r .
 text \<open>Proofs of equivalences.\<close>
 
 lemma list_fset_PER: "(LFSL \<equiv>\<^bsub>PER\<^esub> LFSR) fset_of_list sorted_list_of_fset"
-  unfolding LFSL_def by fastforce
+  unfolding LFSL_def LFSR_def by fastforce
 
 lemma list_set_PER: "(LSL \<equiv>\<^bsub>PER\<^esub> LSR) set sorted_list_of_set"
-  unfolding LSL_def by fastforce
+  unfolding LSL_def LSR_def by fastforce
 
-lemma setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'a list \<Rightarrow> bool)" by auto
+lemma setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'a list \<Rightarrow> bool)" 
+  unfolding LFSR_def by auto
 lemma setListLeftTot: "Binary_Relations_Left_Total.left_total (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> _ \<Rightarrow> _)"
-  by (meson Binary_Relations_Left_Total.left_totalI galois_prop.galois_propE galois_rel.in_dom_left_if_left_Galois list_fset_PER tFSetList.galois_connection_def tFSetList.galois_equivalence_def tFSetList.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence tFSetList.left_total_left_Galois_iff_left_total_leftI tFSetList.partial_equivalence_rel_equivalence_def tFSetList.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right)
+  by (metis (full_types) Binary_Relations_Left_Total.left_totalI LFSR_def in_domI list_fset_PER tFSetList.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence transport.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right)
 
 lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
   apply (rule rev_impD[of _ "_ (\<lambda> xs . _ xs xs)"])
@@ -222,12 +223,64 @@ lemma "\<forall> (xs :: ('a :: linorder) fset) . LFSR xs xs"
       apply uassm
        apply (urule related_Fun_Rel_combI)
      apply uassm
-     apply (urule Fun_Rel_rev_imp_eq_if_rel_injective)
-  apply (urule setListInj)
-      apply (urule refl)
+     apply (urule tFSetList.Fun_Rel_rev_imp_left_rightI)
+      defer
+      defer
+  apply (urule refl)
      apply (urule Fun_Rel_rev_imp_all_if_left_total)
-   apply (urule setListLeftTot)
-  by simp
+     apply (urule setListLeftTot)
+  defer
+    apply (use list_fset_PER in auto)[1]
+   apply (use list_fset_PER in auto)[1]
+  oops
+
+end
+
+context
+  fixes L :: "bool \<Rightarrow> bool \<Rightarrow> bool" and R :: "bool \<Rightarrow> bool \<Rightarrow> bool"
+  and l :: "bool \<Rightarrow> bool" and r :: "bool \<Rightarrow> bool"
+  defines "L \<equiv> (\<lambda> a b . (a = False \<and> b = True))"
+  and "R \<equiv> L"
+  and "l \<equiv> \<lambda> x . x"
+  and "r \<equiv> \<lambda> x . x"
+begin
+
+interpretation t: transport L R l r .
+lemma "t.galois_equivalence" apply (intro t.galois_equivalenceI t.galois_connectionI) 
+     apply (simp add: R_def dep_mono_wrt_relI l_def) apply (simp add: R_def dep_mono_wrt_relI r_def)
+    apply (intro t.galois_propI t.half_galois_prop_leftI)
+  using R_def l_def r_def t.left_Galois_iff_in_codom_and_left_rel_right apply blast
+  apply (intro t.half_galois_prop_rightI)
+  using R_def l_def r_def t.Galois_right_iff_in_dom_and_left_right_rel apply blast
+  using R_def l_def r_def t.galois_propI' by fastforce
+
+lemma "\<not> (left_total_on (in_field L) t.left_Galois)"
+  by (metis L_def in_codom_def in_domE in_field_if_in_codom left_total_on_pred_def t.left_total_on_left_if_left_total_on_left_GaloisI)
+end
+
+context galois
+begin
+
+lemma left_gal_left_tot: 
+  assumes "(L \<equiv>\<^bsub>PER\<^esub> R) l r"
+  shows"left_total_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<^bsub>L\<^esub>\<lessapprox>)"
+proof (intro left_total_onI, elim in_fieldE)
+  fix x x'
+  assume ass: "x \<le>\<^bsub>L\<^esub> x'"
+  then have "l x \<le>\<^bsub>R\<^esub> l x'" using assms
+    by (fastforce intro: galois.right_left_Galois_if_right_relI elim: galois_rel.left_GaloisE transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_order_equivalenceE)
+  have "x \<le>\<^bsub>L\<^esub> r (l x')" using assms ass rel_unit_if_left_rel_if_half_galois_prop_right_if_mono_wrt_rel by (fastforce intro: galois.right_left_Galois_if_right_relI elim: galois_rel.left_GaloisE transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_order_equivalenceE)
+  with \<open>l x \<le>\<^bsub>R\<^esub> l x'\<close> have "x \<^bsub>L\<^esub>\<lessapprox> l x'" by auto
+  then show "in_dom (\<^bsub>L\<^esub>\<lessapprox>) x" by auto
+next
+  fix x x'
+  assume ass: "x' \<le>\<^bsub>L\<^esub> x"
+  from assms have "inflationary_on (in_codom (\<le>\<^bsub>L\<^esub>)) (\<le>\<^bsub>L\<^esub>) \<eta>" by (fastforce elim: transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_order_equivalenceE order_functors.order_equivalenceE)
+  with assms ass have "x \<^bsub>L\<^esub>\<lessapprox> l x" using left_Galois_left_if_in_codom_if_inflationary_on_in_codomI assms
+    by (fastforce simp: inflationary_on_pred_def transport.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence)
+  then show "in_dom (\<^bsub>L\<^esub>\<lessapprox>) x" by auto
+qed
+  
 
 end
 
@@ -252,10 +305,6 @@ lemma transitive_imp_transitive_rel_fset: "transitive A \<Longrightarrow> transi
 
 lemma symmetric_imp_symmetric_rel_map: "symmetric A \<Longrightarrow> symmetric (rel_map fset_of_list (rel_fset A))"
   by (auto simp: symmetricD symmetric_imp_symmetric_rel_fset)
-
-
-
-thm transitive_onD
 
 lemma 
  infl_L1:  "inflationary_on (in_field L1) L1 (order_functors.unit l1 r1)" using per1 
@@ -359,24 +408,31 @@ qed
 
 
 (* declare [[show_types]] *)
-lemma "\<forall>\<^bsub>in_field L\<^esub> (xs :: 'a fset). xs \<equiv>\<^bsub>L\<^esub> xs"
-  apply (rule rev_impD[of _ "\<forall>(xs :: ('b :: linorder) list). ( _ xs xs)"])
+lemma "\<forall>\<^bsub>in_field L\<^esub> (xs :: 'a fset) . \<forall>\<^bsub>in_field L\<^esub> xs' . L xs' xs"
+  apply (rule rev_impD[of _ "_ _ (\<lambda>xs. _ _ (\<lambda>xs'. _ xs' xs))"])
    apply (urule related_Fun_Rel_combI)
     apply (urule related_Fun_Rel_lambdaI)
      apply (urule related_Fun_Rel_combI)
-      apply uassm
+      apply (urule related_Fun_Rel_lambdaI)
        apply (urule related_Fun_Rel_combI)
-     apply uassm
-     apply (urule t.Fun_Rel_rev_imp_bi_relatedI)
+        apply uassm
+       apply (urule related_Fun_Rel_combI)
+  apply (tactic \<open>rotate_tac 1 1\<close>)
+        apply uassm
+     apply (urule t.Fun_Rel_rev_imp_left_rightI)
      defer
      defer
      apply (urule refl)
     apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right]) (* here we need to have the type specified *)
-    defer
+       defer
+       apply (urule refl)
+      apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right]) (* here we need to have the type specified *)
+      defer
      defer
   using per apply blast
   using per apply blast
-  using per apply (metis bin_rel_restrict_right_top_eq in_field_eq_in_dom_if_in_codom_eq_in_dom left_total_onI t.galois_connectionE t.galois_equivalence_def t.galois_propE t.in_codom_left_eq_in_dom_left_if_order_equivalence t.left_total_on_left_Galois_iff_left_total_on_leftI t.partial_equivalence_rel_equivalenceE t.partial_equivalence_rel_equivalence_def t.preorder_equivalence_order_equivalenceE)
+  using per apply (urule galois.left_gal_left_tot)
+  using per apply (urule galois.left_gal_left_tot)
   oops
 
 end
