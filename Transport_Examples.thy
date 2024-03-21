@@ -261,6 +261,7 @@ end
 context galois
 begin
 
+(* should work with Galois_equivalence + reflexive L *)
 lemma left_gal_left_tot: 
   assumes "(L \<equiv>\<^bsub>PER\<^esub> R) l r"
   shows"left_total_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<^bsub>L\<^esub>\<lessapprox>)"

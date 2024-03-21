@@ -551,6 +551,16 @@ corollary Fun_Rel_restricts_iff_ex_on_if_bi_total_on:
   using assms by (intro Fun_Rel_restricts_iff_ex_on_if_left_total_on_if_rel_surjective_at)
   fast+
 
+lemma assumes "((R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub>" shows "(left_total_on P R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub>)"
+proof 
+  fix x assume "P x"
+  let ?P1 = "\<lambda>a. a = x"
+  let ?P2 = "\<lambda>y . R x y \<and> Q y"
+  from assms \<open>P x\<close> have "(\<exists>\<^bsub>P\<^esub> x. ?P1 x) \<longrightarrow> (\<exists>\<^bsub>Q\<^esub> y. ?P2 y)" sorry
+  with assms \<open>P x\<close> show "in_dom R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> x" sorry
+qed
+  
+
 text \<open>Note: the reverse directions do not hold.\<close>
 
 lemma ex_Fun_Rel_imp_ex_on_and_not_left_total_on:
