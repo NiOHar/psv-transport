@@ -551,34 +551,32 @@ corollary Fun_Rel_restricts_iff_ex_on_if_bi_total_on:
   using assms by (intro Fun_Rel_restricts_iff_ex_on_if_left_total_on_if_rel_surjective_at)
   fast+
 
-lemma assumes "((R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub>" shows "(left_total_on P R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub>)"
-proof 
+lemma left_total_on_restrict_right_if_Fun_Rel_imp_ex_on:
+  assumes "((R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub>"
+  shows "(left_total_on P R\<upharpoonleft>\<^bsub>Q\<^esub>)"
+proof
   fix x assume "P x"
-  let ?P1 = "\<lambda>a. a = x"
-  let ?P2 = "\<lambda>y . R x y \<and> Q y"
-  from assms \<open>P x\<close> have "(\<exists>\<^bsub>P\<^esub> x. ?P1 x) \<longrightarrow> (\<exists>\<^bsub>Q\<^esub> y. ?P2 y)" sorry
-  with assms \<open>P x\<close> show "in_dom R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> x" sorry
+  let ?P1 = "\<lambda> (a::'a) . a = x"
+  let ?P2 = "\<lambda> y . R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> x y"
+  have 1:"(R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) ?P1 ?P2" by auto
+  with assms \<open>P x\<close> have "\<exists>\<^bsub>P\<^esub> ?P1 \<longrightarrow> \<exists>\<^bsub>Q\<^esub> ?P2" using Dep_Fun_Rel_relD by fastforce
+  with 1 assms \<open>P x\<close> show "in_dom R\<upharpoonleft>\<^bsub>Q\<^esub> x" by fastforce
 qed
-  
 
-text \<open>Note: the reverse directions do not hold.\<close>
-
-lemma ex_Fun_Rel_imp_ex_on_and_not_left_total_on:
-  assumes "(a = (x::'a) \<or> a = y \<or> a = z) \<and> x \<noteq> y \<and> y \<noteq> z \<and> x \<noteq> z"
-  shows "(\<exists>R :: 'a \<Rightarrow> 'a \<Rightarrow> bool. \<exists>P :: 'a \<Rightarrow> bool. \<exists>Q :: 'a \<Rightarrow> bool.
-  ((R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub> \<and> \<not>(left_total_on P R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub>))"
-proof -
-  (*TODO Nils: prove this counterexample (you can concretise the types above to, say, bool*)
-  let ?R = "\<lambda> (a::'a) (b::'a) . (a = x \<and> b = x)"
-  let ?P = "\<lambda> (a::'a) . True"
-  let ?Q = "\<lambda> (a::'a) . True"
-  have 1: "((?R\<restriction>\<^bsub>?P\<^esub>\<upharpoonleft>\<^bsub>?Q\<^esub>  \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) \<exists>\<^bsub>?P\<^esub> \<exists>\<^bsub>?Q\<^esub>" apply (intro Dep_Fun_Rel_relI, elim Dep_Fun_Rel_relE) apply auto sorry
-  have "(\<nexists> b .(?P y) \<and> (y = x \<and> b = x) \<and> (?Q b)) " using assms by auto
-  then have "\<not>(left_total_on ?P ?R\<restriction>\<^bsub>?P\<^esub>\<upharpoonleft>\<^bsub>?Q\<^esub>)" by auto
-  with 1 show ?thesis by blast
+lemma surjective_at_restrict_left_if_Fun_Rel_rev_imp_ex_on:
+  assumes "((R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) \<exists>\<^bsub>P\<^esub> \<exists>\<^bsub>Q\<^esub>"
+  shows "(rel_surjective_at Q R\<restriction>\<^bsub>P\<^esub>)"
+proof
+  fix y assume "Q y"
+  let ?P2 = "\<lambda> (a::'b) . a = y"
+  let ?P1 = "\<lambda> x . R x y"
+  have 1:"(R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longleftarrow>)) ?P1 ?P2" by auto
+  with assms \<open>Q y\<close> have "\<exists>\<^bsub>P\<^esub> ?P1 \<longleftarrow> \<exists>\<^bsub>Q\<^esub> ?P2" using Dep_Fun_Rel_relD by fastforce
+  with 1 assms \<open>Q y\<close> show "in_codom R\<restriction>\<^bsub>P\<^esub> y" by fastforce
 qed
 
 end
+
 
 corollary Fun_Rel_imp_ex_if_left_total:
   assumes "left_total R"
@@ -595,6 +593,15 @@ corollary Fun_Rel_iff_ex_if_bi_total:
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex Ex"
   using assms by (urule Fun_Rel_restricts_iff_ex_on_if_bi_total_on)
 
+corollary left_total_if_Fun_Rel_imp_ex:
+  assumes "((R \<Rrightarrow> (\<longrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) Ex Ex"
+  shows "(left_total R)"
+  using assms by (urule left_total_on_restrict_right_if_Fun_Rel_imp_ex_on)
+
+corollary surjective_if_Fun_Rel_rev_imp_ex:
+  assumes "((R \<Rrightarrow> (\<longleftarrow>)) \<Rrightarrow> (\<longleftarrow>)) Ex Ex"
+  shows "(rel_surjective R)"
+  using assms by (urule surjective_at_restrict_left_if_Fun_Rel_rev_imp_ex_on)
 
 (*TODO Kevin: review ex1_on later (it's a compound concept, so in principle,
 we should derive it from ex_on, eq_on, and conjunction*)
@@ -673,7 +680,7 @@ corollary bi_total_imp_Ex1_on_iff: assumes "bi_total_on P Q R" "bi_unique_on P R
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) (ex1_on P) (ex1_on Q)"
   using assms apply (intro Dep_Fun_Rel_relI) apply (elim bi_total_onE bi_unique_onE) apply (intro iffI)
   using left_total_imp_Ex1_on_imp[of P Q R] surjective_imp_Ex1_on_revimp[of P Q R] by auto
-(* reverse does not hold *)
+
 
 lemma left_total_imp_Ex1_imp: assumes "bi_total R" "right_unique R"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longrightarrow>)) Ex1 Ex1"
@@ -687,7 +694,6 @@ using assms by (urule surjective_imp_Ex1_on_revimp) auto
 corollary bi_total_imp_Ex1_iff: assumes "bi_total R" "bi_unique R"
   shows "((R \<Rrightarrow> (\<longleftrightarrow>)) \<Rrightarrow> (\<longleftrightarrow>)) Ex1 Ex1"
   using assms by (urule bi_total_imp_Ex1_on_iff) auto
-(* reverse does not hold *)
 
 
 context galois
