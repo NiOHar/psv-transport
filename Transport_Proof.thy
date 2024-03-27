@@ -558,9 +558,9 @@ proof
   fix x assume "P x"
   let ?P1 = "\<lambda> (a::'a) . a = x"
   let ?P2 = "\<lambda> y . R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> x y"
-  have 1:"(R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) ?P1 ?P2" by auto
-  with assms \<open>P x\<close> have "\<exists>\<^bsub>P\<^esub> ?P1 \<longrightarrow> \<exists>\<^bsub>Q\<^esub> ?P2" using Dep_Fun_Rel_relD by fastforce
-  with 1 assms \<open>P x\<close> show "in_dom R\<upharpoonleft>\<^bsub>Q\<^esub> x" by fastforce
+  have "(R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longrightarrow>)) ?P1 ?P2" by auto
+  with assms have "\<exists>\<^bsub>P\<^esub> ?P1 \<longrightarrow> \<exists>\<^bsub>Q\<^esub> ?P2" using Dep_Fun_Rel_relD by fastforce
+  with \<open>P x\<close> show "in_dom R\<upharpoonleft>\<^bsub>Q\<^esub> x" by fastforce
 qed
 
 lemma surjective_at_restrict_left_if_Fun_Rel_rev_imp_ex_on:
@@ -570,10 +570,11 @@ proof
   fix y assume "Q y"
   let ?P2 = "\<lambda> (a::'b) . a = y"
   let ?P1 = "\<lambda> x . R x y"
-  have 1:"(R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longleftarrow>)) ?P1 ?P2" by auto
-  with assms \<open>Q y\<close> have "\<exists>\<^bsub>P\<^esub> ?P1 \<longleftarrow> \<exists>\<^bsub>Q\<^esub> ?P2" using Dep_Fun_Rel_relD by fastforce
-  with 1 assms \<open>Q y\<close> show "in_codom R\<restriction>\<^bsub>P\<^esub> y" by fastforce
+  have "(R\<restriction>\<^bsub>P\<^esub>\<upharpoonleft>\<^bsub>Q\<^esub> \<Rrightarrow> (\<longleftarrow>)) ?P1 ?P2" by auto
+  with assms have "\<exists>\<^bsub>P\<^esub> ?P1 \<longleftarrow> \<exists>\<^bsub>Q\<^esub> ?P2" using Dep_Fun_Rel_relD by fastforce
+  with \<open>Q y\<close> show "in_codom R\<restriction>\<^bsub>P\<^esub> y" by fastforce
 qed
+
 
 end
 
