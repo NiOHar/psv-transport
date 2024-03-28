@@ -2,185 +2,13 @@
 \<^marker>\<open>creator "Kevin Kappelmann"\<close>
 theory Transport_Proof
   imports
-    "Transport.Transport"
-    "Transport.Binary_Relations_Surjective"
-    "Transport.Binary_Relation_Properties"
-    "ML_Unification.ML_Unification_HOL_Setup"
-    "ML_Unification.Unify_Resolve_Tactics"
-
+    Transport.Binary_Relations_Bi_Unique
+    Transport.Binary_Relations_Bi_Total
+    Transport.Restricted_Equality
+    Transport.Galois_Connections
+    Transport.Galois_Relator
+    ML_Unification.Unify_Assumption_Tactic
 begin
-
-paragraph \<open>Unification Hints\<close>
-
-lemma restrict_left_eq_if_eq_top [uhint]:
-  assumes "P \<equiv> (\<top> ::'a \<Rightarrow> bool)"
-  and "(R :: 'a \<Rightarrow> 'b \<Rightarrow> bool) \<equiv> S"
-  shows "R\<restriction>\<^bsub>P\<^esub> \<equiv> S"
-  using assms by simp
-
-lemma restrict_right_eq_if_eq_top [uhint]:
-  assumes "P \<equiv> (\<top> ::'b \<Rightarrow> bool)"
-  and "(R :: 'a \<Rightarrow> 'b \<Rightarrow> bool) \<equiv> S"
-  shows "R\<upharpoonleft>\<^bsub>P\<^esub> \<equiv> S"
-  using assms by simp
-
-lemma rel_injective_at_eq_rel_injective_if_eq_top [uhint]:
-  "P \<equiv> (\<top> ::'b \<Rightarrow> bool) \<Longrightarrow> rel_injective_at P \<equiv> (rel_injective :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding rel_injective_eq_rel_injective_at by simp
-
-lemma rel_injective_on_eq_rel_injective_if_eq_top [uhint]:
-  "P \<equiv> (\<top> ::'a \<Rightarrow> bool) \<Longrightarrow> rel_injective_on P \<equiv> (rel_injective :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding rel_injective_eq_rel_injective_on by simp
-
-lemma right_unique_at_eq_right_unique_if_eq_top [uhint]:
-  "Q \<equiv> (\<top> ::'b \<Rightarrow> bool) \<Longrightarrow> right_unique_at Q \<equiv> (right_unique :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding right_unique_eq_right_unique_at by simp
-
-lemma right_unique_on_eq_right_unique_if_eq_top [uhint]:
-  "P \<equiv> (\<top> ::'a \<Rightarrow> bool) \<Longrightarrow> right_unique_on P \<equiv> (right_unique :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding right_unique_eq_right_unique_on by simp
-
-lemma left_total_on_eq_left_total_if_eq_top [uhint]:
-  "P \<equiv> (\<top> ::'a \<Rightarrow> bool) \<Longrightarrow> left_total_on P \<equiv> (left_total :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding left_total_eq_left_total_on by simp
-
-lemma rel_surjective_at_eq_rel_surjective_if_eq_top [uhint]:
-  "P \<equiv> (\<top> ::'b \<Rightarrow> bool) \<Longrightarrow> rel_surjective_at P \<equiv> (rel_surjective :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding rel_surjective_eq_rel_surjective_at by simp
-
-
-paragraph \<open>Basic Library\<close>
-
-definition "rev_implies \<equiv> (\<longrightarrow>)\<inverse>"
-
-bundle transport_rev_imp_syntax begin notation rev_implies (infixr "\<longleftarrow>" 25) end
-bundle no_transport_rev_imp_syntax begin no_notation rev_implies (infixr "\<longleftarrow>" 25) end
-unbundle transport_rev_imp_syntax
-
-lemma rev_implies_eq_implies_inv [simp]: "(\<longleftarrow>) = (\<longrightarrow>)\<inverse>"
-  unfolding rev_implies_def by simp
-
-lemma rev_impI [intro!]:
-  assumes "Q \<Longrightarrow> P"
-  shows "P \<longleftarrow> Q"
-  using assms by auto
-
-lemma rev_impD [dest!]:
-  assumes "P \<longleftarrow> Q"
-  shows "Q \<Longrightarrow> P"
-  using assms by auto
-
-lemma rev_imp_iff_imp: "(P \<longleftarrow> Q) \<longleftrightarrow> (Q \<longrightarrow> P)" by auto
-
-
-paragraph \<open>Relation Properties\<close>
-
-lemma rel_injective_on_if_Fun_Rel_imp_if_rel_injective_at:
-  assumes "rel_injective_at Q R"
-  and "(R \<Rrightarrow> (\<longrightarrow>)) P Q"
-  shows "rel_injective_on P R"
-  using assms by (intro rel_injective_onI) (auto dest: rel_injective_atD)
-
-lemma rel_injective_at_if_Fun_Rel_rev_imp_if_rel_injective_on:
-  assumes "rel_injective_on P R"
-  and "(R \<Rrightarrow> (\<longleftarrow>)) P Q"
-  shows "rel_injective_at Q R"
-  using assms by (intro rel_injective_atI) (auto dest: rel_injective_onD)
-
-lemma right_unique_on_if_Fun_Rel_imp_if_right_unique_at:
-  assumes "right_unique_at Q R"
-  and "(R \<Rrightarrow> (\<longrightarrow>)) P Q"
-  shows "right_unique_on P R"
-  using assms by (intro right_unique_onI) (auto dest: right_unique_atD)
-
-lemma right_unique_at_if_Fun_Rel_rev_imp_if_right_unique_on:
-  assumes "right_unique_on P R"
-  and "(R \<Rrightarrow> (\<longleftarrow>)) P Q"
-  shows "right_unique_at Q R"
-  using assms by (intro right_unique_atI) (auto dest: right_unique_onD)
-
-
-definition "bi_unique_on \<equiv> right_unique_on \<sqinter> rel_injective_on"
-
-lemma bi_unique_onI [intro]:
-  assumes "right_unique_on P R"
-  and "rel_injective_on P R"
-  shows "bi_unique_on P R"
-  unfolding bi_unique_on_def using assms by auto
-
-lemma bi_unique_onE [elim]:
-  assumes "bi_unique_on P R"
-  obtains "right_unique_on P R" "rel_injective_on P R"
-  using assms unfolding bi_unique_on_def by auto
-
-lemma bi_unique_on_rel_inv_if_Fun_Rel_iff_if_bi_unique_on:
-  assumes "bi_unique_on P R"
-  and "(R \<Rrightarrow> (\<longleftrightarrow>)) P Q"
-  shows "bi_unique_on Q R\<inverse>"
-  using assms by (intro bi_unique_onI
-    rel_injective_on_if_Fun_Rel_imp_if_rel_injective_at
-    right_unique_on_if_Fun_Rel_imp_if_right_unique_at)
-  auto
-
-definition "bi_unique \<equiv> bi_unique_on (\<top> :: 'a \<Rightarrow> bool) :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool"
-
-(*TODO Kevin: use argument-free lemmas for all relational properties*)
-lemma bi_unique_eq_bi_unique_on:
-  "bi_unique = (bi_unique_on (\<top> :: 'a \<Rightarrow> bool) :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding bi_unique_def ..
-
-lemma bi_unique_on_eq_bi_unique_if_eq_top [uhint]:
-  "P \<equiv> (\<top> ::'a \<Rightarrow> bool) \<Longrightarrow> bi_unique_on P \<equiv> (bi_unique :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding bi_unique_eq_bi_unique_on by simp
-
-lemma bi_uniqueI [intro]:
-  assumes "right_unique R"
-  and "rel_injective R"
-  shows "bi_unique R"
-  using assms by (urule bi_unique_onI)
-
-lemma bi_uniqueE [elim]:
-  assumes "bi_unique R"
-  obtains "right_unique R" "rel_injective R"
-  using assms by (urule (e) bi_unique_onE)
-
-
-definition "bi_total_on P Q \<equiv> left_total_on P \<sqinter> rel_surjective_at Q"
-
-lemma bi_total_onI [intro]:
-  assumes "left_total_on P R"
-  and "rel_surjective_at Q R"
-  shows "bi_total_on P Q R"
-  unfolding bi_total_on_def using assms by auto
-
-lemma bi_total_onE [elim]:
-  assumes "bi_total_on P Q R"
-  obtains "left_total_on P R" "rel_surjective_at Q R"
-  using assms unfolding bi_total_on_def by auto
-
-definition "bi_total \<equiv> bi_total_on (\<top> :: 'a \<Rightarrow> bool) (\<top> :: 'b \<Rightarrow> bool) :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool"
-
-lemma bi_total_eq_bi_total_on:
-  "(bi_total :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool) =
-  (bi_total_on (\<top> :: 'a \<Rightarrow> bool) (\<top> :: 'b \<Rightarrow> bool) :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding bi_total_def ..
-
-lemma bi_total_on_eq_bi_total_if_eq_top [uhint]:
-  assumes "P \<equiv> (\<top> ::'a \<Rightarrow> bool)" "Q \<equiv> (\<top> ::'b \<Rightarrow> bool)"
-  shows "bi_total_on P Q \<equiv> (bi_total :: ('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> bool)"
-  unfolding bi_total_eq_bi_total_on using assms by simp
-
-lemma bi_totalI [intro]:
-  assumes "left_total R"
-  and "rel_surjective R"
-  shows "bi_total R"
-  using assms by (urule bi_total_onI)
-
-lemma bi_totalE [elim]:
-  assumes "bi_total R"
-  obtains "left_total R" "rel_surjective R"
-  using assms by (urule (e) bi_total_onE)
-
 
 paragraph \<open>Equality\<close>
 
@@ -343,7 +171,7 @@ lemma all_onE [elim]:
 
 lemma all_on_top_eq_all [simp]: "\<forall>\<^bsub>\<top>\<^esub> = All" by fastforce
 
-lemma all_on_eq_all_if_eq_top [uhint]:
+lemma all_on_top_eq_all_uhint [uhint]:
   assumes "P \<equiv> (\<top> ::'a \<Rightarrow> bool)"
   shows "\<forall>\<^bsub>P\<^esub> \<equiv> All"
   using assms by simp
@@ -520,7 +348,7 @@ lemma ex_onE [elim]:
 
 lemma ex_on_top_eq_ex [simp]: "\<exists>\<^bsub>\<top>\<^esub> = Ex" by fastforce
 
-lemma ex_on_eq_ex_if_eq_top [uhint]:
+lemma ex_on_top_eq_ex_uhint [uhint]:
   assumes "P \<equiv> (\<top> ::'a \<Rightarrow> bool)"
   shows "\<exists>\<^bsub>P\<^esub> \<equiv> Ex"
   using assms by simp
@@ -616,9 +444,9 @@ lemma ex_on1I [intro]:
 lemma ex_on1E[elim]: assumes "ex1_on P Q" obtains "\<exists>!x. (P x \<and> Q x)"
   using assms unfolding ex1_on_def by blast
 
-lemma ex_on1_top_eq_ex1[simp]: "ex1_on \<top> = Ex1" by fastforce
+lemma ex_on1_top_eq_ex1 [simp]: "ex1_on \<top> = Ex1" by fastforce
 
-lemma ex_on1_eq_ex1_if_eq_top [uhint]:
+lemma ex_on1_top_eq_ex1_uhint [uhint]:
   assumes "P \<equiv> (\<top> ::'a \<Rightarrow> bool)"
   shows "ex1_on P \<equiv> Ex1"
   using assms by simp

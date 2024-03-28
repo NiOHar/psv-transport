@@ -46,6 +46,14 @@ sublocale transport
 
 end *)
 
+lemmas related_Fun_Rel_combI = Dep_Fun_Rel_relD[where ?S="\<lambda>_ _. S" for S, rotated]
+lemma related_Fun_Rel_lambdaI:
+  assumes "\<And>x y. R x y \<Longrightarrow> S (f x) (g y)"
+  and "T = (R \<Rrightarrow> S)"
+  shows "T f g"
+  using assms by blast
+
+
 definition "pos (i :: int) \<equiv> 0 \<le> i"
 
 interpretation tZN : transport "(=\<^bsub>pos\<^esub>)" "(=)" nat int .
@@ -57,20 +65,11 @@ interpretation t : transport L R l r for L R l r .
 lemma perZN: "((=\<^bsub>pos\<^esub>) \<equiv>\<^bsub>PER\<^esub> (=)) nat int"
   unfolding pos_def by fastforce
 
-
-lemmas related_Fun_Rel_combI = Dep_Fun_Rel_relD[where ?S="\<lambda>_ _. S" for S, rotated]
-lemma related_Fun_Rel_lambdaI:
-  assumes "\<And>x y. R x y \<Longrightarrow> S (f x) (g y)"
-  and "T = (R \<Rrightarrow> S)"
-  shows "T f g"
-  using assms by blast
-
-
 named_theorems trp_side_condition
 
 lemma tZN_left_total [trp_side_condition]: "left_total_on pos tZN.left_Galois"
   unfolding pos_def
-  by (intro left_total_onI in_domI tZN.left_GaloisI bin_rel_restrict_leftI)
+  by (intro left_total_onI in_domI tZN.left_GaloisI rel_restrict_leftI)
   (auto intro: nat_0_le[symmetric])
 
 lemma tZN_rel_injective [trp_side_condition]: "rel_injective tZN.left_Galois"
@@ -80,31 +79,14 @@ lemma rev_imp_top [trp_side_condition]: "(R \<Rrightarrow> (\<longleftarrow>)) \
   by auto
 
 end
+
 text \<open>Unification Tuning\<close>
 
-declare [[ML_map_context \<open>Logger.set_log_levels Logger.root_logger Logger.ALL\<close>]]
-(* declare [[show_types]] *)
 declare [[ucombine add = \<open>Standard_Unification_Combine.eunif_data
   (fn _ => fn binders => Tactic_Util.set_kernel_ho_unif_bounds 1 1
     #> Tactic_Util.silence_kernel_ho_bounds_exceeded
     #> Higher_Order_Unification.unify binders)
   (Standard_Unification_Combine.metadata \<^binding>\<open>HO_unif\<close> Prio.VERY_LOW)\<close>]]
-
-ML\<open>
-  @{functor_instance struct_name = Standard_Unification_Hints_Concl_Combine
-    and functor_name = Unification_Combine
-    and id = \<open>"uhint_concl"\<close>}
-\<close>
-local_setup \<open>Standard_Unification_Combine.setup_attribute NONE\<close>
-
-ML\<open>
-  @{functor_instance struct_name = Standard_Unification_Hints_Concl_Mixed_Unification
-    and functor_name = Mixed_Unification
-    and id = \<open>"uhint_concl"\<close>
-    and more_args = \<open>structure UC = Standard_Unification_Hints_Concl_Combine\<close>}
-\<close>
-declare [[uhint where concl_unifier =
-  Standard_Unification_Hints_Concl_Mixed_Unification.first_higherp_decomp_comb_higher_unify]]
 
 
 text \<open>Examples\<close>
@@ -134,11 +116,10 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int). x = x"
 ML\<open>structure A = Higher_Order_Unification\<close>
 
 lemma tZN_00: "tZN.left_Galois 0 0"
-  by (simp add: bin_rel_restrict_leftI in_codomI pos_def tZN.left_Galois_iff_in_codom_and_left_rel_right)
+  by (simp add: rel_restrict_leftI in_codomI pos_def tZN.left_Galois_iff_in_codom_and_left_rel_right)
 lemma tZN_addadd: "(tZN.left_Galois \<Rrightarrow> tZN.left_Galois \<Rrightarrow> tZN.left_Galois) ((+) :: int \<Rightarrow> int \<Rightarrow> int) ((+) :: nat \<Rightarrow> nat \<Rightarrow> nat)"
   apply (intro Dep_Fun_Rel_relI)
-  by (metis (full_types) bin_rel_restrict_leftE galois_rel.left_GaloisE of_nat_add perZN tZN.galois_connectionE tZN.galois_equivalence_def tZN.partial_equivalence_rel_equivalence_def tZN.right_left_Galois_if_right_relI)
-
+  by (metis (full_types) rel_restrict_leftE galois_rel.left_GaloisE of_nat_add perZN tZN.galois_connectionE tZN.galois_equivalence_def tZN.partial_equivalence_rel_equivalence_def tZN.right_left_Galois_if_right_relI)
 
 lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
   apply (rule rev_impD[of _ "_ (_ _) (\<lambda>x. _ x (_ x _))"])
@@ -158,17 +139,16 @@ lemma "\<forall>\<^bsub>pos\<^esub> (x :: int) . x = x + 0"
     apply (urule refl)
  apply (urule iffD2[OF Fun_Rel_rev_imp_all_on_iff_left_total_on_restrict_right])
    apply (urule tZN_left_total)
-  by simp
+  by auto
 
-lemma tZN_restrict[simp,uhint]: "tZN.left_Galois\<restriction>\<^bsub>pos\<^esub> = tZN.left_Galois"
-  using bin_rel_restrict_leftE by blast
+lemma tZN_restrict[simp,rec_uhint]: "tZN.left_Galois\<restriction>\<^bsub>pos\<^esub> = tZN.left_Galois"
+  using rel_restrict_leftE by blast
 
 lemma tZN_injective_on_pos: "rel_injective_on (pos :: int \<Rightarrow> bool) (tZN.left_Galois\<restriction>\<^bsub>pos\<^esub>)"
   by (intro rel_injective_onI) auto
 
 lemma tZN_injective_at_top: "rel_injective_at (\<top> :: nat \<Rightarrow> bool) (tZN.left_Galois\<restriction>\<^bsub>pos\<^esub>)"
   by (intro rel_injective_atI) auto
-
 
 lemma tZN_surjective_at_top: "rel_surjective_at (\<top> :: nat \<Rightarrow> bool) (tZN.left_Galois\<restriction>\<^bsub>pos\<^esub>)"
   apply (intro rel_surjective_atI)
@@ -191,6 +171,7 @@ lemma "\<exists>\<^bsub>pos\<^esub> (x :: int) . x = 0"
   apply blast
   done
 
+
 (* from https://www.isa-afp.org/sessions/transport/#Transport_Lists_Sets_Examples.html *)
 definition "LFSL xs xs' \<equiv> fset_of_list xs = fset_of_list xs'"
 definition "(LFSR :: 'a fset \<Rightarrow> _) \<equiv> (=)"
@@ -210,7 +191,7 @@ lemma list_fset_PER: "(LFSL \<equiv>\<^bsub>PER\<^esub> LFSR) fset_of_list sorte
 lemma list_set_PER: "(LSL \<equiv>\<^bsub>PER\<^esub> LSR) set sorted_list_of_set"
   unfolding LSL_def LSR_def by fastforce
 
-lemma setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'a list \<Rightarrow> bool)" 
+lemma setListInj: "rel_injective (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> 'a list \<Rightarrow> bool)"
   unfolding LFSR_def by auto
 lemma setListLeftTot: "Binary_Relations_Left_Total.left_total (tFSetList.left_Galois :: ('a :: linorder) fset \<Rightarrow> _ \<Rightarrow> _)"
   by (metis (full_types) Binary_Relations_Left_Total.left_totalI LFSR_def in_domI list_fset_PER tFSetList.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence transport.partial_equivalence_rel_equivalence_right_left_iff_partial_equivalence_rel_equivalence_left_right)
@@ -246,7 +227,7 @@ context
 begin
 
 interpretation t: transport L R l r .
-lemma "t.galois_equivalence" apply (intro t.galois_equivalenceI t.galois_connectionI) 
+lemma "t.galois_equivalence" apply (intro t.galois_equivalenceI t.galois_connectionI)
      apply (simp add: R_def dep_mono_wrt_relI l_def) apply (simp add: R_def dep_mono_wrt_relI r_def)
     apply (intro t.galois_propI t.half_galois_prop_leftI)
   using R_def l_def r_def t.left_Galois_iff_in_codom_and_left_rel_right apply blast
@@ -262,7 +243,7 @@ context galois
 begin
 
 (* should work with Galois_equivalence + reflexive L *)
-lemma left_gal_left_tot: 
+lemma left_gal_left_tot:
   assumes "(L \<equiv>\<^bsub>PER\<^esub> R) l r"
   shows"left_total_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<^bsub>L\<^esub>\<lessapprox>)"
 proof (intro left_total_onI, elim in_fieldE)
@@ -281,7 +262,7 @@ next
     by (fastforce simp: inflationary_on_pred_def transport.left_Galois_left_if_left_rel_if_partial_equivalence_rel_equivalence)
   then show "in_dom (\<^bsub>L\<^esub>\<lessapprox>) x" by auto
 qed
-  
+
 
 end
 
@@ -297,7 +278,7 @@ context
 begin
 
 interpretation t: transport L R l r .
-                                     
+
 lemma symmetric_imp_symmetric_rel_fset: "symmetric A \<Longrightarrow> symmetric (rel_fset A)"
   by (simp add: rel_fset_alt_def rel_iff_rel_if_symmetric symmetricI)
 
@@ -307,12 +288,12 @@ lemma transitive_imp_transitive_rel_fset: "transitive A \<Longrightarrow> transi
 lemma symmetric_imp_symmetric_rel_map: "symmetric A \<Longrightarrow> symmetric (rel_map fset_of_list (rel_fset A))"
   by (auto simp: symmetricD symmetric_imp_symmetric_rel_fset)
 
-lemma 
- infl_L1:  "inflationary_on (in_field L1) L1 (order_functors.unit l1 r1)" using per1 
+lemma
+ infl_L1:  "inflationary_on (in_field L1) L1 (order_functors.unit l1 r1)" using per1
   apply (elim transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_order_equivalenceE  order_functors.order_equivalenceE rel_equivalence_onE) .
 
-lemma 
- defl_L1:  "deflationary_on (in_field L1) L1 (order_functors.unit l1 r1)" using per1 
+lemma
+ defl_L1:  "deflationary_on (in_field L1) L1 (order_functors.unit l1 r1)" using per1
   apply (elim transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_order_equivalenceE  order_functors.order_equivalenceE rel_equivalence_onE) .
 
 lemma infl_R1: "inflationary_on (in_field R1) R1 (order_functors.counit l1 r1)" using per1
@@ -340,7 +321,7 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
         then show "L (r x) (r y)"  unfolding r_def R_def L_def using \<open>(R1 \<Rrightarrow>\<^sub>m L1) r1\<close> by (fastforce simp: dep_mono_wrt_relD rel_fset_alt_def) +
       qed
       show "rel_equivalence_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<le>\<^bsub>L\<^esub>) t.unit" proof (intro rel_equivalence_onI)
-        show "inflationary_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<le>\<^bsub>L\<^esub>) t.unit" proof (intro inflationary_onI) 
+        show "inflationary_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<le>\<^bsub>L\<^esub>) t.unit" proof (intro inflationary_onI)
           fix x
           assume  "in_field L x"
           from \<open>in_field L x\<close> have "\<forall> a . a |\<in>| x \<longrightarrow>  in_field L1 a" using L_def
@@ -351,7 +332,7 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
           then show "in_field (\<le>\<^bsub>L\<^esub>) x \<Longrightarrow> x \<le>\<^bsub>L\<^esub> t.unit x" using order_functors.unit_eq[of l r] L_def \<open>\<forall> a . a |\<in>| x \<longrightarrow> L1 a (r1 (l1 a))\<close>
             using rel_fset_alt by force
         qed
-        show "deflationary_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<le>\<^bsub>L\<^esub>) t.unit" proof (intro deflationary_onI) 
+        show "deflationary_on (in_field (\<le>\<^bsub>L\<^esub>)) (\<le>\<^bsub>L\<^esub>) t.unit" proof (intro deflationary_onI)
         fix x
         assume  "in_field L x"
         from \<open>in_field L x\<close> have "\<forall> a . a |\<in>| x \<longrightarrow>  in_field L1 a" using L_def
@@ -364,7 +345,7 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
       qed
     qed
     show "rel_equivalence_on (in_field (\<le>\<^bsub>R\<^esub>)) (\<le>\<^bsub>R\<^esub>) t.counit" proof (intro rel_equivalence_onI)
-      show "inflationary_on (in_field (\<le>\<^bsub>R\<^esub>)) (\<le>\<^bsub>R\<^esub>) t.counit" proof (intro inflationary_onI) 
+      show "inflationary_on (in_field (\<le>\<^bsub>R\<^esub>)) (\<le>\<^bsub>R\<^esub>) t.counit" proof (intro inflationary_onI)
         fix x
         assume  "in_field R x"
         from \<open>in_field R x\<close> have "\<forall> a . List.member x a \<longrightarrow>  in_field R1 a" using R_def
@@ -377,7 +358,7 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
             rel_fset_alt fset_of_list.rep_eq
           by (fastforce simp: fset_of_list.rep_eq in_set_member rel_fset_alt)
       qed
-      show "deflationary_on (in_field (\<le>\<^bsub>R\<^esub>)) (\<le>\<^bsub>R\<^esub>) t.counit" proof (intro deflationary_onI) 
+      show "deflationary_on (in_field (\<le>\<^bsub>R\<^esub>)) (\<le>\<^bsub>R\<^esub>) t.counit" proof (intro deflationary_onI)
         fix x
         assume  "in_field R x"
         from \<open>in_field R x\<close> have "\<forall> a . List.member x a \<longrightarrow>  in_field R1 a" using R_def
@@ -395,7 +376,7 @@ proof (intro transport.partial_equivalence_rel_equivalence_if_order_equivalenceI
   show "partial_equivalence_rel L" proof
       have "transitive L1" using per1 apply (elim transport.partial_equivalence_rel_equivalenceE transport.preorder_equivalence_galois_equivalenceE) by blast
       then show "transitive L"  using L_def transitive_imp_transitive_rel_fset by auto
-      show "symmetric L" using L_def symmetric_imp_symmetric_rel_fset per1 
+      show "symmetric L" using L_def symmetric_imp_symmetric_rel_fset per1
       by (auto elim: transport.partial_equivalence_rel_equivalenceE)
   qed
 next
